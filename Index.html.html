@@ -1,0 +1,3307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parte Diario de Quirófano y Anestesia</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Fuente Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- React 18 y Babel para ejecutar JSX directamente en el navegador -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-900">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo, useRef, useEffect } = React;
+
+    // ============================================================================
+    // ICONOS SVG INTEGRADOS
+    // ============================================================================
+    const createIcon = (paths) => ({ className = 'w-4 h-4' }) => (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+      >
+        {paths}
+      </svg>
+    );
+
+    const ShieldCheck = createIcon(
+      <>
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <path d="m9 12 2 2 4-4" />
+      </>
+    );
+    const Lock = createIcon(
+      <>
+        <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      </>
+    );
+    const Unlock = createIcon(
+      <>
+        <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+        <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+      </>
+    );
+    const Upload = createIcon(
+      <>
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="17 8 12 3 7 8" />
+        <line x1="12" x2="12" y1="3" y2="15" />
+      </>
+    );
+    const Clock = createIcon(
+      <>
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </>
+    );
+    const Search = createIcon(
+      <>
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.3-4.3" />
+      </>
+    );
+    const History = createIcon(
+      <>
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+        <path d="M3 3v5h5" />
+        <path d="M12 7v5l4 2" />
+      </>
+    );
+    const Edit3 = createIcon(
+      <>
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+      </>
+    );
+    const Check = createIcon(<polyline points="20 6 9 17 4 12" />);
+    const X = createIcon(
+      <>
+        <path d="M18 6 6 18" />
+        <path d="m6 6 12 12" />
+      </>
+    );
+    const UserPlus = createIcon(
+      <>
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <line x1="19" x2="19" y1="8" y2="14" />
+        <line x1="22" x2="16" y1="11" y2="11" />
+      </>
+    );
+    const FileSpreadsheet = createIcon(
+      <>
+        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+        <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+        <path d="M8 13h2" />
+        <path d="M14 13h2" />
+        <path d="M8 17h2" />
+        <path d="M14 17h2" />
+      </>
+    );
+    const AlertCircle = createIcon(
+      <>
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" x2="12" y1="8" y2="12" />
+        <line x1="12" x2="12.01" y1="16" y2="16" />
+      </>
+    );
+    const CheckCircle2 = createIcon(
+      <>
+        <circle cx="12" cy="12" r="10" />
+        <path d="m9 12 2 2 4-4" />
+      </>
+    );
+    const CheckCircle = CheckCircle2;
+    const Calendar = createIcon(
+      <>
+        <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+        <line x1="16" x2="16" y1="2" y2="6" />
+        <line x1="8" x2="8" y1="2" y2="6" />
+        <line x1="3" x2="21" y1="10" y2="10" />
+      </>
+    );
+    const CalendarDays = Calendar;
+    const Stethoscope = createIcon(
+      <>
+        <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3" />
+        <path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4" />
+        <circle cx="20" cy="10" r="2" />
+      </>
+    );
+    const ChevronDown = createIcon(<path d="m6 9 6 6 6-6" />);
+    const Sparkles = createIcon(
+      <>
+        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+      </>
+    );
+    const LogOut = createIcon(
+      <>
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        <polyline points="16 17 21 12 16 7" />
+        <line x1="21" x2="9" y1="12" y2="12" />
+      </>
+    );
+    const AlertTriangle = createIcon(
+      <>
+        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+        <line x1="12" x2="12" y1="9" y2="13" />
+        <line x1="12" x2="12.01" y1="17" y2="17" />
+      </>
+    );
+    const Cloud = createIcon(<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />);
+    const FolderSync = createIcon(
+      <>
+        <path d="M9 20H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v1" />
+        <path d="M12 10v4h4" />
+        <path d="m12 14 1.5-1.5c.9-.9 2.2-1.5 3.5-1.5s2.6.6 3.5 1.5c.4.4.8 1 1 1.5" />
+        <path d="M22 22v-4h-4" />
+        <path d="m22 18-1.5 1.5c-.9.9-2.1 1.5-3.5 1.5s-2.6-.6-3.5-1.5c-.4-.4-.8-1-1-1.5" />
+      </>
+    );
+    const Link2 = createIcon(
+      <>
+        <path d="M9 17H7A5 5 0 0 1 7 7h2" />
+        <path d="M15 7h2a5 5 0 1 1 0 10h-2" />
+        <line x1="8" x2="16" y1="12" y2="12" />
+      </>
+    );
+    const HelpCircle = createIcon(
+      <>
+        <circle cx="12" cy="12" r="10" />
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+        <path d="M12 17h.01" />
+      </>
+    );
+    const Server = createIcon(
+      <>
+        <rect width="20" height="8" x="2" y="2" rx="2" ry="2" />
+        <rect width="20" height="8" x="2" y="14" rx="2" ry="2" />
+        <line x1="6" x2="6.01" y1="6" y2="6" />
+        <line x1="6" x2="6.01" y1="18" y2="18" />
+      </>
+    );
+    const Globe = createIcon(
+      <>
+        <circle cx="12" cy="12" r="10" />
+        <line x1="2" x2="22" y1="12" y2="12" />
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+      </>
+    );
+
+    const STORAGE_KEY_WEEKLY = 'parte_quirofano_semanal_v2';
+    const STORAGE_KEY_LOGS = 'parte_quirofano_logs_v2';
+    const STORAGE_KEY_ONEDRIVE = 'parte_quirofano_onedrive_v2';
+    const ADMIN_COOKIE_NAME = 'parte_qx_admin_auth';
+
+    // Utilidades de Cookies para mantener la sesión de Administrador activa
+    const setAdminAuthCookie = (days = 30) => {
+      try {
+        const expires = new Date(Date.now() + days * 864e5).toUTCString();
+        document.cookie = `${ADMIN_COOKIE_NAME}=authenticated_v1; expires=${expires}; path=/; SameSite=Lax`;
+        localStorage.setItem(ADMIN_COOKIE_NAME, 'authenticated_v1');
+      } catch (e) {}
+    };
+
+    const getAdminAuthCookie = () => {
+      try {
+        const hasCookie = document.cookie
+          .split('; ')
+          .some((row) => row.startsWith(`${ADMIN_COOKIE_NAME}=authenticated_v1`));
+        const hasLocal = localStorage.getItem(ADMIN_COOKIE_NAME) === 'authenticated_v1';
+        return hasCookie || hasLocal;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    const clearAdminAuthCookie = () => {
+      try {
+        document.cookie = `${ADMIN_COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`;
+        localStorage.removeItem(ADMIN_COOKIE_NAME);
+      } catch (e) {}
+    };
+
+    const WEEK_DAYS = [
+      { key: 'LUNES', label: 'Lunes', short: 'LUN', jsDay: 1 },
+      { key: 'MARTES', label: 'Martes', short: 'MAR', jsDay: 2 },
+      { key: 'MIERCOLES', label: 'Miércoles', short: 'MIÉ', jsDay: 3 },
+      { key: 'JUEVES', label: 'Jueves', short: 'JUE', jsDay: 4 },
+      { key: 'VIERNES', label: 'Viernes', short: 'VIE', jsDay: 5 },
+      { key: 'SABADO', label: 'Sábado', short: 'SÁB', jsDay: 6 },
+      { key: 'DOMINGO', label: 'Domingo', short: 'DOM', jsDay: 0 }
+    ];
+
+    const getCurrentDayKey = () => {
+      const dayNum = new Date().getDay();
+      const found = WEEK_DAYS.find((d) => d.jsDay === dayNum);
+      return found ? found.key : 'JUEVES';
+    };
+
+    const detectWeekdayFromText = (text, fallbackKey = 'JUEVES') => {
+      const upper = String(text || '')
+        .toUpperCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+      for (const d of WEEK_DAYS) {
+        if (upper.includes(d.key)) return d.key;
+      }
+      return fallbackKey;
+    };
+
+    // Cargador dinámico de SheetJS
+    const loadSheetJSLibrary = () => {
+      return new Promise((resolve) => {
+        if (window.XLSX) {
+          resolve(window.XLSX);
+          return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        script.async = true;
+        script.onload = () => resolve(window.XLSX || null);
+        script.onerror = () => resolve(null);
+        document.head.appendChild(script);
+      });
+    };
+
+    const INITIAL_DATE_TITLE = 'JUEVES 12 NOVIEMBRE';
+
+    const extractIndividualDoctorsFromText = (rawText) => {
+      if (!rawText) return [];
+      const parts = String(rawText)
+        .split('/')
+        .map((p) => p.trim())
+        .filter(Boolean);
+
+      const doctors = [];
+      parts.forEach((part) => {
+        const cleanName = part.replace(/\s*\(.*?\)/g, '').replace(/\s+/g, ' ').trim();
+        if (
+          cleanName &&
+          (/^Dr\.?\s/i.test(cleanName) || /^Dra\.?\s/i.test(cleanName))
+        ) {
+          doctors.push(cleanName);
+        }
+      });
+      return doctors;
+    };
+
+    const INITIAL_WORKERS_FROM_EXCEL = [
+      'Dr A. Carrascosa', 'Dr J. Ruiz', 'Dr. A. Benigni', 'Dr. A. Callejo', 'Dr. A. García',
+      'Dr. A. Juez', 'Dr. A. Martínez', 'Dr. A. Ramiro', 'Dr. C. Cortez', 'Dr. D. Benguría',
+      'Dr. D. Domínguez', 'Dr. E. García Hernández', 'Dr. E. Zarzuela', 'Dr. F. Gómez',
+      'Dr. F. López Lence', 'Dr. F. Torcal', 'Dr. G. Sánchez', 'Dr. I. de Gregorio',
+      'Dr. J. Alberti', 'Dr. J. Arijón', 'Dr. J. Campoy', 'Dr. J. Cavero', 'Dr. J. Cora',
+      'Dr. J. Herrero', 'Dr. J. L. Mesa', 'Dr. J. Recio', 'Dr. J. Silva', 'Dr. J. Vigo',
+      'Dr. L. Casero', 'Dr. M. Cendrero', 'Dr. M. Cortés', 'Dr. M. González de la Aleja',
+      'Dr. M. Peñas', 'Dr. M. Saiz', 'Dr. M. Álvarez', 'Dr. P.G. Pimentel', 'Dr. S. García',
+      'Dr. S. Kadaoui', 'Dr. S. Sánchez-Palencia', 'Dr. V. Zarza', 'Dra A. Calderón',
+      'Dra A. Fernandez', 'Dra E. Murcia', 'Dra R.R. Montalbán', 'Dra. A. Bellido',
+      'Dra. A. Capitán', 'Dra. A. Carrero', 'Dra. A. Díaz', 'Dra. A. Hermira',
+      'Dra. A. Rodríguez', 'Dra. A. Tirado', 'Dra. AB. Martínez', 'Dra. B. Aranda',
+      'Dra. B. Balsera', 'Dra. B. Gallego', 'Dra. B. Montalbán', 'Dra. B. Rubio',
+      'Dra. C. Armesto', 'Dra. C. Camus', 'Dra. C. Estrada', 'Dra. C. Lugo', 'Dra. C. Muñio',
+      'Dra. C. Olea', 'Dra. C. Puigserver', 'Dra. C. Sarrais', 'Dra. D. Rodríguez',
+      'Dra. E. Carvajal', 'Dra. E. Conesa', 'Dra. E. Lopez', 'Dra. E. Lucena',
+      'Dra. E. Olivas', 'Dra. G-Margarida', 'Dra. G. Seronero', 'Dra. I. Real',
+      'Dra. I. de la Calle', 'Dra. J. López Buitron', 'Dra. L. Bueno', 'Dra. L. Castellanos',
+      'Dra. L. González', 'Dra. M. A. Escudero', 'Dra. M. González', 'Dra. M. I. Tebar',
+      'Dra. M. Jaro', 'Dra. M. Levstek', 'Dra. M. Martín', 'Dra. M. Ortega', 'Dra. M. Salcedo',
+      'Dra. M. Santiago', 'Dra. M. Sánchez R4', 'Dra. N. Bouzó', 'Dra. N. González',
+      'Dra. N. Zegarra', 'Dra. O. González', 'Dra. P. Aliste', 'Dra. P. Pascual',
+      'Dra. P. Pérez', 'Dra. P. Rodríguez Nieto', 'Dra. R. Álvarez', 'Dra. R. Casado',
+      'Dra. R. Delestal', 'Dra. R. González', 'Dra. R. Jiménez', 'Dra. R. Navarro',
+      'Dra. R. Saldaña', 'Dra. R. Sanz', 'Dra. S. Arlanzón', 'Dra. S. Reca', 'Dra. V. López',
+      'Dra. Z. Xia'
+    ];
+
+    const SPECIAL_ASSIGNMENT_OPTIONS = [
+      'GUARDIA', 'GUARDIA OBS', 'GUARDIA 1', 'GUARDIA 6', 'GUARDIA 6/GUARDIA OBS',
+      'GUARDIA 2, 4, 5, 3', 'GUARDIA 3, 5, 2, 4', 'GUARDIA 4, 2, 3, 5', 'GUARDIA 5, 3, 2, 4',
+      'ANEST. CARDIACA', 'ANEST. PEDIATRICA', 'ANESTESIA URPA2', 'ANULADO',
+      'TRASLADO', 'TARDE', 'PASA A LA M', 'SIN ASIGNAR'
+    ];
+
+    const buildInitialSections = () => [
+      {
+        id: 'bloque-guardia',
+        title: '1. GUARDIA Y LIBRA GUARDIA',
+        badgeColor: 'bg-blue-600',
+        columns: [
+          {
+            id: 'guardia-act',
+            subtitle: 'GUARDIA',
+            headerBg: 'bg-blue-900 text-white',
+            items: [
+              { id: 'r4_c3', row: 4, col: 3, code: 'G1', label: 'Guardia 1', worker: 'Dr. V. Zarza' },
+              { id: 'r5_c3', row: 5, col: 3, code: 'G2', label: 'Guardia 2', worker: 'Dr. M. González de la Aleja' },
+              { id: 'r6_c3', row: 6, col: 3, code: 'G3', label: 'Guardia 3', worker: 'Dr. M. Peñas' },
+              { id: 'r7_c3', row: 7, col: 3, code: 'G4', label: 'Guardia 4', worker: 'Dr J. Ruiz/Dra. M. Martín (mañana G)' },
+              { id: 'r8_c3', row: 8, col: 3, code: 'G5', label: 'Guardia 5', worker: 'Dra. D. Rodríguez' },
+              { id: 'r9_c3', row: 9, col: 3, code: 'G6', label: 'Guardia 6', worker: 'Dra. B. Montalbán' },
+              { id: 'r10_c3', row: 10, col: 3, code: 'G7', label: 'Guardia 7', worker: 'Dra. C. Olea' },
+              { id: 'r11_c3', row: 11, col: 3, code: 'G8', label: 'Guardia 8', worker: 'Dr. F. Gómez' }
+            ]
+          },
+          {
+            id: 'guardia-libra',
+            subtitle: 'LIBRA GUARDIA',
+            headerBg: 'bg-indigo-900 text-white',
+            items: [
+              { id: 'r4_c7', row: 4, col: 7, code: 'L1', label: 'Libra 1', worker: 'Dr. F. Torcal' },
+              { id: 'r5_c7', row: 5, col: 7, code: 'L2', label: 'Libra 2', worker: 'Dr. A. Benigni' },
+              { id: 'r6_c7', row: 6, col: 7, code: 'L3', label: 'Libra 3', worker: 'Dra. P. Pascual' },
+              { id: 'r7_c7', row: 7, col: 7, code: 'L4', label: 'Libra 4', worker: 'Dra. S. Reca' },
+              { id: 'r8_c7', row: 8, col: 7, code: 'L5', label: 'Libra 5', worker: 'Dr. A. Ramiro' },
+              { id: 'r9_c7', row: 9, col: 7, code: 'L6', label: 'Libra 6', worker: 'Dra. G. Seronero' },
+              { id: 'r10_c7', row: 10, col: 7, code: 'L7', label: 'Libra 7', worker: 'Dr. P.G. Pimentel' },
+              { id: 'r11_c7', row: 11, col: 7, code: 'L8', label: 'Libra 8', worker: 'Dr. E. García Hernández' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bloque-incidencias',
+        title: '2. INCIDENCIAS, BAJAS, FORMACIÓN Y VACACIONES',
+        badgeColor: 'bg-amber-600',
+        columns: [
+          {
+            id: 'bajas-excedencias',
+            subtitle: 'BAJAS Y EXCEDENCIAS / OTROS',
+            headerBg: 'bg-slate-800 text-white',
+            items: [
+              { id: 'r14_c1', row: 14, col: 1, code: 'BAJA', label: 'Baja médica 1', worker: 'Dra. A. Carrero' },
+              { id: 'r15_c1', row: 15, col: 1, code: 'BAJA', label: 'Baja médica 2', worker: 'Dra. N. Zegarra' },
+              { id: 'r16_c1', row: 16, col: 1, code: 'BAJA', label: 'Baja médica 3', worker: 'Dra A. Fernandez' },
+              { id: 'r17_c1', row: 17, col: 1, code: 'BAJA', label: 'Baja médica 4', worker: 'Dra. M. I. Tebar' },
+              { id: 'r18_c1', row: 18, col: 1, code: 'BAJA', label: 'Baja médica 5', worker: 'Dr. S. García' },
+              { id: 'r19_c1', row: 19, col: 1, code: 'BAJA', label: 'Baja médica 6', worker: 'Dr. C. Cortez' },
+              { id: 'r20_c1', row: 20, col: 1, code: 'BAJA', label: 'Baja médica 7', worker: 'Dra. M. Ortega' },
+              { id: 'r14_c3', row: 14, col: 3, code: 'EXC', label: 'Excedencias / Otros 1', worker: 'Dr. I. de Gregorio' },
+              { id: 'r15_c3', row: 15, col: 3, code: 'EXC', label: 'Excedencias / Otros 2', worker: 'Dra. R. Navarro' },
+              { id: 'r16_c3', row: 16, col: 3, code: 'EXC', label: 'Excedencias / Otros 3', worker: 'Dra. V. López' }
+            ]
+          },
+          {
+            id: 'dld-formacion-vac',
+            subtitle: 'DLD, P. FORMACIÓN, VACACIONES Y REDUCCIÓN',
+            headerBg: 'bg-slate-800 text-white',
+            items: [
+              { id: 'r13_c7', row: 13, col: 7, code: 'DLD', label: 'Día Libre Disposición 1', worker: 'Dra. G-Margarida' },
+              { id: 'r14_c7', row: 14, col: 7, code: 'DLD', label: 'Día Libre Disposición 2', worker: 'Dra. R. Sanz' },
+              { id: 'r15_c7', row: 15, col: 7, code: 'FORM', label: 'P. Formación 1', worker: 'Dra. L. Castellanos' },
+              { id: 'r16_c7', row: 16, col: 7, code: 'FORM', label: 'P. Formación 2', worker: 'Dra. I. de la Calle' },
+              { id: 'r17_c7', row: 17, col: 7, code: 'FORM', label: 'P. Formación 3', worker: 'Dra. R. Delestal' },
+              { id: 'r18_c7', row: 18, col: 7, code: 'FORM', label: 'P. Formación 4', worker: 'Dra. A. Capitán' },
+              { id: 'r19_c7', row: 19, col: 7, code: 'VAC', label: 'Vacaciones', worker: 'Dra. M. González/Dr. S. Kadaoui/ Dra. R. Álvarez' },
+              { id: 'r22_c7', row: 22, col: 7, code: 'RED', label: 'Reducción 1', worker: 'Dra. AB. Martínez' },
+              { id: 'r23_c7', row: 23, col: 7, code: 'RED', label: 'Reducción 2', worker: 'Dra. C. Camus' },
+              { id: 'r24_c7', row: 24, col: 7, code: 'RED', label: 'Reducción 3', worker: 'Dr. J. Alberti' },
+              { id: 'r25_c7', row: 25, col: 7, code: 'RED', label: 'Reducción 4', worker: 'Dra. B. Aranda' },
+              { id: 'r33_c7', row: 33, col: 7, code: 'RED', label: 'Reducción 5', worker: 'Dra. L. González' },
+              { id: 'r35_c7', row: 35, col: 7, code: 'RED', label: 'Reducción 6', worker: 'Dra. R. González' },
+              { id: 'r37_c7', row: 37, col: 7, code: 'RED', label: 'Reducción 7', worker: 'Dr. M. Álvarez' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bloque-area-quirurgica',
+        title: '3. ÁREA QUIRÚRGICA (QUIRÓFANOS 1ª Y 2ª PLANTA + TARDES)',
+        badgeColor: 'bg-emerald-600',
+        columns: [
+          {
+            id: 'qx-1-planta',
+            subtitle: 'QUIRÓFANOS 1ª AB / 1ª CD Y TARDE 1ª PLANTA',
+            headerBg: 'bg-emerald-900 text-white',
+            items: [
+              { id: 'r45_c3', row: 45, col: 3, code: 'Qx 5', label: 'NEUMOLOGIA/DIGESTIVO (1ª AB)', worker: 'Dr. A. Callejo' },
+              { id: 'r46_c3', row: 46, col: 3, code: 'Qx 6', label: 'TORAX (1ª AB)', worker: 'Dr. M. Saiz' },
+              { id: 'r47_c3', row: 47, col: 3, code: 'Qx 7', label: 'TORAX (1ª AB)', worker: 'Dra. C. Lugo' },
+              { id: 'r48_c3', row: 48, col: 3, code: 'Qx 8', label: 'CARDIACA (18) (1ª AB)', worker: 'ANEST. CARDIACA' },
+              { id: 'r50_c3', row: 50, col: 3, code: 'Qx 10', label: 'VASCULAR (1ª AB)', worker: 'Dr. S. Sánchez-Palencia' },
+              { id: 'r52_c3', row: 52, col: 3, code: 'Qx 11', label: 'ROBOT C. PEDIATRICA (1ª CD)', worker: 'ANEST. PEDIATRICA' },
+              { id: 'r53_c3', row: 53, col: 3, code: 'Qx 12', label: 'TRAUMA COLUMNA (1ª CD)', worker: 'Dra. P. Aliste' },
+              { id: 'r54_c3', row: 54, col: 3, code: 'Qx 13', label: 'ORL (1ª CD)', worker: 'Dra. E. Conesa' },
+              { id: 'r55_c3', row: 55, col: 3, code: 'Qx 14', label: 'PLASTICA (1ª CD)', worker: 'Dr. J. L. Mesa' },
+              { id: 'r56_c3', row: 56, col: 3, code: 'Qx 15', label: 'MAXILOFACIAL (1ª CD)', worker: 'Dra. C. Sarrais' },
+              { id: 'r59_c3', row: 59, col: 3, code: 'Qx 17', label: 'NEUROCIRUGIA (1ª CD)', worker: 'Dr. J. Herrero' },
+              { id: 'r61_c3', row: 61, col: 3, code: 'Qx 19', label: 'ORL (1ª CD)', worker: 'Dra. A. Hermira' },
+              { id: 'r62_c3', row: 62, col: 3, code: 'Qx 20', label: 'URGENCIAS (1ª CD)', worker: 'GUARDIA' },
+              { id: 'r64_c3', row: 64, col: 3, code: 'T11', label: 'TARDE - ROBOT C. PEDIATRICA', worker: 'ANEST. PEDIATRICA' },
+              { id: 'r65_c3', row: 65, col: 3, code: 'T13', label: 'TARDE - ORL', worker: 'Dra. A. Díaz' },
+              { id: 'r66_c3', row: 66, col: 3, code: 'T15', label: 'TARDE - MAXILO 55A', worker: 'Dr. E. Zarzuela' }
+            ]
+          },
+          {
+            id: 'qx-2-planta',
+            subtitle: 'QUIRÓFANOS 2ª AB / 2ª CD Y TARDE 2ª PLANTA',
+            headerBg: 'bg-teal-900 text-white',
+            items: [
+              { id: 'r46_c7', row: 46, col: 7, code: 'Qx 22', label: 'TRAUMA (2ª AB)', worker: 'Dra. M. Sánchez R4' },
+              { id: 'r47_c7', row: 47, col: 7, code: 'Qx 23', label: 'TRAUMA (2ª AB)', worker: 'Dra A. Calderón' },
+              { id: 'r48_c7', row: 48, col: 7, code: 'Qx 24', label: 'UROLOGIA (2ª AB)', worker: 'Dr. J. Cora' },
+              { id: 'r49_c7', row: 49, col: 7, code: 'Qx 25', label: 'CIR GEN (2ª AB)', worker: 'Dra. R. Jiménez' },
+              { id: 'r50_c7', row: 50, col: 7, code: 'Qx 26', label: 'CIR GEN (2ª AB)', worker: 'Dra. N. González' },
+              { id: 'r51_c7', row: 51, col: 7, code: 'Qx 27', label: 'CIR GEN (2ª AB)', worker: 'Dra. M. Levstek' },
+              { id: 'r52_c7', row: 52, col: 7, code: 'Qx 28', label: 'CIR GEN (2ª AB)', worker: 'Dra. E. Carvajal' },
+              { id: 'r53_c7', row: 53, col: 7, code: 'Qx 29', label: 'TRAUMA (2ª AB)', worker: 'Dra. C. Puigserver' },
+              { id: 'r54_c7', row: 54, col: 7, code: 'Qx 30', label: 'TRAUMA URG (2ª AB)', worker: 'Dra R.R. Montalbán' },
+              { id: 'r56_c7', row: 56, col: 7, code: 'Qx 31', label: 'CIR GEN (2ª CD)', worker: 'Dr. F. López Lence' },
+              { id: 'r57_c7', row: 57, col: 7, code: 'Qx 32', label: 'UROLOGIA (2ª CD)', worker: 'Dra. C. Armesto' },
+              { id: 'r58_c7', row: 58, col: 7, code: 'Qx 33', label: 'URGENCIAS (2ª CD)', worker: 'GUARDIA' },
+              { id: 'r59_c7', row: 59, col: 7, code: 'URG', label: 'URGENCIAS APOYO (2ª CD)', worker: 'GUARDIA' },
+              { id: 'r60_c7', row: 60, col: 7, code: 'Qx 34', label: 'GINECOLOGÍA (2ª CD)', worker: 'Dra. M. Jaro' },
+              { id: 'r61_c7', row: 61, col: 7, code: 'Qx 35', label: 'GINECOLOGÍA (2ª CD)', worker: 'Dra. E. Lucena' },
+              { id: 'r62_c7', row: 62, col: 7, code: 'Qx 36', label: 'URG GINE/OBS (2ª CD)', worker: 'GUARDIA OBS' },
+              { id: 'r63_c7', row: 63, col: 7, code: 'Qx 37', label: 'URG OBSTÉTRICA (2ª CD)', worker: 'Dr. J. Vigo' },
+              { id: 'r64_c7', row: 64, col: 7, code: 'Qx 38', label: 'GINECOLOGIA (2ª CD)', worker: 'Dr. E. Zarzuela' },
+              { id: 'r65_c7', row: 65, col: 7, code: 'Qx 39', label: 'UROLOGIA COMPLEX (2ª CD)', worker: 'Dr. A. Juez/GUARDIA' },
+              { id: 'r68_c7', row: 68, col: 7, code: 'T22', label: 'TARDE - TRAUMA', worker: 'Dra. C. Estrada' },
+              { id: 'r69_c7', row: 69, col: 7, code: 'T32', label: 'TARDE - UROLOGIA', worker: 'Dra. S. Arlanzón' },
+              { id: 'r70_c7', row: 70, col: 7, code: 'T39', label: 'TARDE - PROLONG URO', worker: 'Dr. J. Recio' },
+              { id: 'r71_c7', row: 71, col: 7, code: 'T30', label: 'TARDE - MICRO Trauma', worker: 'Dra. E. Carvajal' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bloque-alejada-urg',
+        title: '4. ANESTESIA ALEJADA DE QX, MATERNIDAD, URGENCIAS Y SUSTITUCIONES',
+        badgeColor: 'bg-purple-600',
+        columns: [
+          {
+            id: 'alejada-qx-urg',
+            subtitle: 'ANESTESIA ALEJADA DE QX Y QUIRÓFANOS URG',
+            headerBg: 'bg-purple-900 text-white',
+            items: [
+              { id: 'r76_c3', row: 76, col: 3, code: 'M1', label: 'RX VASCULAR', worker: 'Dr. J. Recio/' },
+              { id: 'r77_c3', row: 77, col: 3, code: 'M', label: 'HEMODINÁMICA', worker: 'ANEST. CARDIACA' },
+              { id: 'r84_c3', row: 84, col: 3, code: 'M', label: 'QUIRÓFANOS URG (8:30-14:45)', worker: 'GUARDIA 2, 4, 5, 3' },
+              { id: 'r85_c3', row: 85, col: 3, code: 'T', label: 'QUIRÓFANOS URG (14:45-22:00)', worker: 'GUARDIA 3, 5, 2, 4' },
+              { id: 'r86_c3', row: 86, col: 3, code: 'N1', label: 'QUIRÓFANOS URG (22:00-4:00)', worker: 'GUARDIA 4, 2, 3, 5' },
+              { id: 'r87_c3', row: 87, col: 3, code: 'N2', label: 'QUIRÓFANOS URG (4:00-8:30)', worker: 'GUARDIA 5, 3, 2, 4' }
+            ]
+          },
+          {
+            id: 'refuerzo-maternidad-sust',
+            subtitle: 'REFUERZO / TRASPLANTE, MATERNIDAD Y SUSTITUCIONES',
+            headerBg: 'bg-fuchsia-900 text-white',
+            items: [
+              { id: 'r76_c7', row: 76, col: 7, code: 'M', label: 'REFUERZO QUIRÓFANO / TRASPLANTE', worker: 'Dr. J. Campoy' },
+              { id: 'r80_c7', row: 80, col: 7, code: 'FIV', label: 'MATERNIDAD - FIV', worker: 'TRASLADO' },
+              { id: 'r81_c7', row: 81, col: 7, code: 'PAR', label: 'MATERNIDAD - PARITORIO', worker: 'GUARDIA OBS' },
+              { id: 'r84_c7', row: 84, col: 7, code: 'S1', label: 'SUSTITUCIONES S1', worker: 'Dra. M. Salcedo' },
+              { id: 'r85_c7', row: 85, col: 7, code: 'S2', label: 'SUSTITUCIONES S2', worker: 'Dra. E. Conesa' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bloque-postoperatorios',
+        title: '5. CUIDADOS POSTOPERATORIOS (URPA 2ºP, URPA 1ºP Y UCI-A 4ªP)',
+        badgeColor: 'bg-rose-600',
+        columns: [
+          {
+            id: 'urpa-2-1',
+            subtitle: 'URPA 2ºP Y URPA 1ºP',
+            headerBg: 'bg-rose-900 text-white',
+            items: [
+              { id: 'r91_c3', row: 91, col: 3, code: 'M1', label: 'URPA 2ºP - Mañana 1', worker: 'Dr. L. Casero/GUARDIA 8H' },
+              { id: 'r92_c3', row: 92, col: 3, code: 'M2', label: 'URPA 2ºP - Mañana 2', worker: 'SIN ASIGNAR' },
+              { id: 'r93_c3', row: 93, col: 3, code: 'T', label: 'URPA 2ºP - Tarde', worker: 'Dr. M. Cendrero/GUARDIA OBS' },
+              { id: 'r94_c3', row: 94, col: 3, code: 'N', label: 'URPA 2ºP - Noche', worker: 'GUARDIA 6/GUARDIA OBS' },
+              { id: 'r96_c3', row: 96, col: 3, code: 'M1', label: 'URPA 1ºP (9-11H)', worker: 'ANESTESIA URPA2' },
+              { id: 'r97_c3', row: 97, col: 3, code: 'M2', label: 'URPA 1ºP (11H-15H)', worker: 'GUARDIA 6' },
+              { id: 'r98_c3', row: 98, col: 3, code: 'T', label: 'URPA 1ºP (Tarde)', worker: 'GUARDIA 6' }
+            ]
+          },
+          {
+            id: 'ucia-4p',
+            subtitle: 'UCI-A 4ª PLANTA',
+            headerBg: 'bg-red-900 text-white',
+            items: [
+              { id: 'r91_c7', row: 91, col: 7, code: 'M1', label: 'UCI-A 4ªP - M1', worker: 'Dra. E. Lopez' },
+              { id: 'r92_c7', row: 92, col: 7, code: 'M2', label: 'UCI-A 4ªP - M2', worker: 'Dr. J. Silva' },
+              { id: 'r93_c7', row: 93, col: 7, code: 'M3', label: 'UCI-A 4ªP - M3', worker: 'Dra. O. González' },
+              { id: 'r94_c7', row: 94, col: 7, code: 'M4', label: 'UCI-A 4ªP - M4', worker: 'Dra. P. Rodríguez Nieto' },
+              { id: 'r95_c7', row: 95, col: 7, code: 'M5', label: 'UCI-A 4ªP - M5', worker: 'Dra. B. Gallego' },
+              { id: 'r97_c7', row: 97, col: 7, code: 'T/N', label: 'UCI-A 4ªP - Turno T/N 1', worker: 'GUARDIA 1' },
+              { id: 'r98_c7', row: 98, col: 7, code: 'T/N', label: 'UCI-A 4ªP - Turno T/N 2', worker: 'GUARDIA 6' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'bloque-cma-consultas',
+        title: '6. CENTRO DE ACTIVIDADES AMBULATORIAS (CMA), ENDOSCOPIAS, DOLOR Y DIRECCIÓN',
+        badgeColor: 'bg-cyan-600',
+        columns: [
+          {
+            id: 'cma-endoscopias-dolor',
+            subtitle: 'QUIRÓFANOS CMA, TARDES CMA, ENDOSCOPIAS Y DOLOR',
+            headerBg: 'bg-cyan-900 text-white',
+            items: [
+              { id: 'r103_c3', row: 103, col: 3, code: 'CMA 1', label: 'OFTALMOLOGIA (CMA)', worker: 'GUARDIA' },
+              { id: 'r104_c3', row: 104, col: 3, code: 'CMA 2', label: 'TRAUMA (CMA)', worker: 'Dra. C. Muñio (pasa de la T)' },
+              { id: 'r105_c3', row: 105, col: 3, code: 'CMA 3', label: 'OFTALMOLOGIA (CMA)', worker: 'Dra. A. Tirado' },
+              { id: 'r106_c3', row: 106, col: 3, code: 'CMA 4', label: 'PLASTICA (CMA)', worker: 'Dra. M. Santiago' },
+              { id: 'r107_c3', row: 107, col: 3, code: 'CMA 5', label: 'MAXILOFACIAL (CMA)', worker: 'Dra. J. López Buitron' },
+              { id: 'r108_c3', row: 108, col: 3, code: 'CMA 6', label: 'LITOTRICIA (CMA)', worker: 'Dra. A. Rodríguez' },
+              { id: 'r109_c3', row: 109, col: 3, code: 'CMA 7', label: 'ENDOSCOPIAS (CMA)', worker: 'Dr. G. Sánchez' },
+              { id: 'r111_c3', row: 111, col: 3, code: 'T', label: 'TARDES - URPA CMA', worker: 'Dr. J. Cavero' },
+              { id: 'r112_c3', row: 112, col: 3, code: 'T1/3', label: 'TARDES - OFTALMOLOGIA', worker: 'ANULADO' },
+              { id: 'r113_c3', row: 113, col: 3, code: 'T2', label: 'TARDES - CIR GEN FERRERO', worker: 'Dra. Z. Xia' },
+              { id: 'r114_c3', row: 114, col: 3, code: 'T4', label: 'TARDES - U. DOLOR', worker: 'ANULADO' },
+              { id: 'r119_c3', row: 119, col: 3, code: 'M1', label: 'ENDOSCOPIAS - BUSCA/CONS', worker: 'TARDE' },
+              { id: 'r120_c3', row: 120, col: 3, code: 'M2', label: 'ENDOSCOPIAS - SALA M2', worker: 'Dr. J. Arijón' },
+              { id: 'r121_c3', row: 121, col: 3, code: 'M3', label: 'ENDOSCOPIAS - SALA M3', worker: 'Dra. E. Olivas (pasa de la T)' },
+              { id: 'r122_c3', row: 122, col: 3, code: 'M4', label: 'ENDOSCOPIAS - SALA M4', worker: 'Dra. B. Rubio' },
+              { id: 'r123_c3', row: 123, col: 3, code: 'T', label: 'ENDOSCOPIAS - TARDE BUSCA', worker: 'Dr. A. Martínez' },
+              { id: 'r124_c3', row: 124, col: 3, code: 'T', label: 'ENDOSCOPIAS - TARDE SALA', worker: 'PASA A LA M' },
+              { id: 'r127_c3', row: 127, col: 3, code: 'D1', label: 'DOLOR - PLANTA', worker: 'Dra. P. Pérez' },
+              { id: 'r128_c3', row: 128, col: 3, code: 'D2', label: 'DOLOR - CONSULTA ONCO', worker: 'Dra. B. Balsera' },
+              { id: 'r129_c3', row: 129, col: 3, code: 'D3', label: 'DOLOR - CONSULTA 2', worker: 'Dra. L. Bueno' },
+              { id: 'r130_c3', row: 130, col: 3, code: 'D4', label: 'DOLOR - SALA BLOQUEOS', worker: 'Dra E. Murcia' },
+              { id: 'r131_c3', row: 131, col: 3, code: 'D5', label: 'DOLOR - CONS. PREINTERV/E-CONS', worker: 'Dra. R. Saldaña' },
+              { id: 'r132_c3', row: 132, col: 3, code: 'D6', label: 'DOLOR - GESTION COMITÉ', worker: 'Dr A. Carrascosa' }
+            ]
+          },
+          {
+            id: 'consultas-preanestesia-resp',
+            subtitle: 'URPA CMA, CONSULTAS PREANESTESIA Y DIRECCIÓN',
+            headerBg: 'bg-sky-900 text-white',
+            items: [
+              { id: 'r103_c7', row: 103, col: 7, code: 'CMA', label: 'URPA CMA', worker: 'GUARDIA' },
+              { id: 'r106_c7', row: 106, col: 7, code: 'C1', label: 'CONSULTA CMA - CS. VILLAVERDE', worker: 'Dra. R. Casado' },
+              { id: 'r110_c7', row: 110, col: 7, code: 'C11', label: 'CONSULTA PREANESTESIA C11', worker: 'Dra. N. Bouzó' },
+              { id: 'r111_c7', row: 111, col: 7, code: 'C12', label: 'CONSULTA PREANESTESIA C12', worker: 'Dra. M. A. Escudero' },
+              { id: 'r112_c7', row: 112, col: 7, code: 'C13', label: 'CONSULTA PREANESTESIA C13', worker: 'Dr. D. Domínguez' },
+              { id: 'r113_c7', row: 113, col: 7, code: 'C14', label: 'CONSULTA PREANESTESIA - TRASPLANTE', worker: 'Dr. D. Benguría' },
+              { id: 'r114_c7', row: 114, col: 7, code: 'PIC', label: 'CONSULTA PREANESTESIA - PIC', worker: 'Dra. A. Bellido' },
+              { id: 'r116_c7', row: 116, col: 7, code: '412', label: 'CARDIACA 412', worker: 'ANEST. CARDIACA' },
+              { id: 'r118_c7', row: 118, col: 7, code: 'C', label: 'CONSULTA GINE', worker: 'Dra. M. Salcedo' },
+              { id: 'r124_c7', row: 124, col: 7, code: 'JS', label: 'ACTIVIDAD NO ASISTENCIAL - JS', worker: 'Dr. A. García' },
+              { id: 'r133_c7', row: 133, col: 7, code: 'RESP', label: 'RESPONSABLE SERVICIO', worker: 'Dr. M. Cortés' },
+              { id: 'r134_c7', row: 134, col: 7, code: 'CBQ', label: 'COORDINACIÓN BLOQUE QUIRÚRGICO (CBQ)', worker: 'Dra. I. Real' }
+            ]
+          }
+        ]
+      }
+    ];
+
+    const formatDateTime = (dateObj = new Date()) => {
+      const pad = (n) => String(n).padStart(2, '0');
+      const day = pad(dateObj.getDate());
+      const month = pad(dateObj.getMonth() + 1);
+      const year = dateObj.getFullYear();
+      const hours = pad(dateObj.getHours());
+      const minutes = pad(dateObj.getMinutes());
+      const seconds = pad(dateObj.getSeconds());
+      return `${day}/${month}/${year} - ${hours}:${minutes}:${seconds}`;
+    };
+
+    const formatShortTime = (dateObj = new Date()) => {
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}`;
+    };
+
+    const createInitialWeeklyStore = () => {
+      const nowStr = formatDateTime(new Date());
+      return {
+        JUEVES: {
+          dayKey: 'JUEVES',
+          scheduleDate: INITIAL_DATE_TITLE,
+          fileNameLoaded: '12 noviembre (1).xlsx',
+          lastUpdated: nowStr,
+          lastActionSummary: 'Carga inicial de Excel: 12 noviembre (1).xlsx',
+          sections: buildInitialSections(),
+          workersList: INITIAL_WORKERS_FROM_EXCEL,
+          source: 'Excel Semanal Precargado'
+        }
+      };
+    };
+
+    function App() {
+      const systemTodayKey = useMemo(() => getCurrentDayKey(), []);
+      const [activeDayKey, setActiveDayKey] = useState(systemTodayKey);
+      const [weeklySchedules, setWeeklySchedules] = useState(createInitialWeeklyStore);
+
+      const [scheduleDate, setScheduleDate] = useState(INITIAL_DATE_TITLE);
+      const [sections, setSections] = useState(buildInitialSections);
+      const [workersList, setWorkersList] = useState(INITIAL_WORKERS_FROM_EXCEL);
+      const [lastUpdated, setLastUpdated] = useState(() => formatDateTime(new Date()));
+      const [lastActionSummary, setLastActionSummary] = useState(
+        'Carga inicial de Excel: 12 noviembre (1).xlsx'
+      );
+      const [fileNameLoaded, setFileNameLoaded] = useState('12 noviembre (1).xlsx');
+
+      const [cloudStatus, setCloudStatus] = useState('sincronizado');
+      const [showWeeklyAdminPanel, setShowWeeklyAdminPanel] = useState(false);
+      const [showCloudArchitectureModal, setShowCloudArchitectureModal] = useState(false);
+      const [oneDriveUrl, setOneDriveUrl] = useState('');
+      const [targetUploadDay, setTargetUploadDay] = useState('AUTO');
+      const [isSyncingOneDrive, setIsSyncingOneDrive] = useState(false);
+
+      const [changeLog, setChangeLog] = useState([
+        {
+          id: 'init-1',
+          time: formatDateTime(new Date()),
+          shortTime: formatShortTime(new Date()),
+          user: 'admin',
+          type: 'excel',
+          position: 'Parte Completo',
+          previousValue: '-',
+          newValue: '12 noviembre (1).xlsx (109 posiciones / 118 profesionales)'
+        }
+      ]);
+
+      const [isAdmin, setIsAdmin] = useState(() => getAdminAuthCookie());
+      const [rememberSessionCookie, setRememberSessionCookie] = useState(true);
+      const [showLoginModal, setShowLoginModal] = useState(false);
+      const [usernameInput, setUsernameInput] = useState('');
+      const [passwordInput, setPasswordInput] = useState('');
+      const [loginError, setLoginError] = useState('');
+
+      const [editingCell, setEditingCell] = useState(null);
+      const [workerSearchModal, setWorkerSearchModal] = useState('');
+      const [customWorkerInput, setCustomWorkerInput] = useState('');
+
+      const [showAddWorkerModal, setShowAddWorkerModal] = useState(false);
+      const [newWorkerName, setNewWorkerName] = useState('');
+
+      const [showHistoryModal, setShowHistoryModal] = useState(false);
+      const [showDuplicatesModal, setShowDuplicatesModal] = useState(false);
+      const [onlyDuplicatesFilter, setOnlyDuplicatesFilter] = useState(false);
+      const [searchQuery, setSearchQuery] = useState('');
+      const [selectedSectionFilter, setSelectedSectionFilter] = useState('ALL');
+      const [onlyModifiedFilter, setOnlyModifiedFilter] = useState(false);
+      const [viewLayoutMode, setViewLayoutMode] = useState('EXCEL');
+      const [collapsedSections, setCollapsedSections] = useState({});
+      const [highlightedDoctor, setHighlightedDoctor] = useState('');
+      const [notification, setNotification] = useState(null);
+
+      const fileInputRef = useRef(null);
+      const weeklyMultiFileInputRef = useRef(null);
+
+      useEffect(() => {
+        loadSheetJSLibrary();
+      }, []);
+
+      useEffect(() => {
+        try {
+          const savedWeekly = localStorage.getItem(STORAGE_KEY_WEEKLY);
+          if (savedWeekly) setWeeklySchedules(JSON.parse(savedWeekly));
+          const savedLogs = localStorage.getItem(STORAGE_KEY_LOGS);
+          if (savedLogs) setChangeLog(JSON.parse(savedLogs));
+          const savedOneDrive = localStorage.getItem(STORAGE_KEY_ONEDRIVE);
+          if (savedOneDrive) setOneDriveUrl(savedOneDrive);
+        } catch (e) {}
+
+        const handleStorageSync = (event) => {
+          try {
+            if (event.key === STORAGE_KEY_WEEKLY && event.newValue) {
+              setWeeklySchedules(JSON.parse(event.newValue));
+            }
+            if (event.key === STORAGE_KEY_LOGS && event.newValue) {
+              setChangeLog(JSON.parse(event.newValue));
+            }
+          } catch (err) {}
+        };
+
+        window.addEventListener('storage', handleStorageSync);
+        return () => window.removeEventListener('storage', handleStorageSync);
+      }, []);
+
+      const persistStateToCloud = async (
+        nextWeeklySchedules,
+        nextChangeLog,
+        nextOneDrive = oneDriveUrl
+      ) => {
+        try {
+          localStorage.setItem(STORAGE_KEY_WEEKLY, JSON.stringify(nextWeeklySchedules));
+          localStorage.setItem(
+            STORAGE_KEY_LOGS,
+            JSON.stringify((nextChangeLog || changeLog).slice(0, 40))
+          );
+          localStorage.setItem(STORAGE_KEY_ONEDRIVE, nextOneDrive || '');
+          setCloudStatus('sincronizado');
+        } catch (err) {}
+      };
+
+      const handleLoginSubmit = (e) => {
+        e.preventDefault();
+        const u = usernameInput.trim().toLowerCase();
+        const p = passwordInput.trim();
+        if (
+          (u === 'admin' && p === 'quirofano2026') ||
+          (u === 'anestesia' && p === 'hospital')
+        ) {
+          setIsAdmin(true);
+          if (rememberSessionCookie) {
+            setAdminAuthCookie(30);
+          } else {
+            setAdminAuthCookie(1);
+          }
+          setShowLoginModal(false);
+          setLoginError('');
+          setUsernameInput('');
+          setPasswordInput('');
+          showToast(
+            rememberSessionCookie
+              ? 'Sesión de Administrador iniciada y guardada en cookies (30 días).'
+              : 'Sesión de Administrador iniciada.'
+          );
+        } else {
+          setLoginError('Credenciales incorrectas. Usa admin / quirofano2026');
+        }
+      };
+
+      const handleLogout = () => {
+        setIsAdmin(false);
+        clearAdminAuthCookie();
+        setShowWeeklyAdminPanel(false);
+        showToast('Sesión cerrada y cookie de Administrador eliminada.', 'info');
+      };
+
+      const fillDemoCredentials = () => {
+        setUsernameInput('admin');
+        setPasswordInput('quirofano2026');
+        setLoginError('');
+      };
+
+      useEffect(() => {
+        const dayData = weeklySchedules[activeDayKey] || weeklySchedules.JUEVES;
+        if (dayData) {
+          setScheduleDate(dayData.scheduleDate);
+          setSections(dayData.sections);
+          setWorkersList(dayData.workersList || INITIAL_WORKERS_FROM_EXCEL);
+          setLastUpdated(dayData.lastUpdated);
+          setLastActionSummary(dayData.lastActionSummary);
+          setFileNameLoaded(dayData.fileNameLoaded);
+        }
+      }, [activeDayKey, weeklySchedules]);
+
+      const handleSelectDayTab = (dayKey) => {
+        setActiveDayKey(dayKey);
+        if (!weeklySchedules[dayKey]) {
+          showToast(
+            `El ${dayKey} aún no tiene un Excel propio cargado. Mostrando plantilla base lista para editar o subir.`,
+            'info'
+          );
+        }
+      };
+
+      const showToast = (msg, type = 'success') => {
+        setNotification({ msg, type });
+        setTimeout(() => setNotification(null), 4500);
+      };
+
+      const parseMatrixIntoScheduleData = (matrix, sourceFileName, forcedDayKey = 'AUTO') => {
+        let extractedDate = INITIAL_DATE_TITLE;
+        if (matrix[1] && matrix[1][1] && String(matrix[1][1]).trim() !== '') {
+          extractedDate = String(matrix[1][1]).trim();
+        } else {
+          for (let r = 0; r < Math.min(5, matrix.length); r++) {
+            for (let c = 0; c < (matrix[r]?.length || 0); c++) {
+              const cellText = String(matrix[r][c] || '').trim();
+              if (cellText.length > 5) {
+                extractedDate = cellText;
+                break;
+              }
+            }
+          }
+        }
+
+        const detectedDayKey =
+          forcedDayKey !== 'AUTO'
+            ? forcedDayKey
+            : detectWeekdayFromText(`${extractedDate} ${sourceFileName}`, activeDayKey);
+
+        const extractedWorkersSet = new Set(INITIAL_WORKERS_FROM_EXCEL);
+        matrix.forEach((row) => {
+          [1, 3, 7].forEach((colIdx) => {
+            const val = String(row?.[colIdx] || '').trim();
+            if (val) {
+              const individuals = extractIndividualDoctorsFromText(val);
+              individuals.forEach((docName) => extractedWorkersSet.add(docName));
+            }
+          });
+        });
+
+        let updatedCellsCount = 0;
+        const freshSections = buildInitialSections().map((sec) => ({
+          ...sec,
+          columns: sec.columns.map((col) => ({
+            ...col,
+            items: col.items.map((item) => {
+              const excelRow = matrix[item.row];
+              if (excelRow && excelRow[item.col] !== undefined) {
+                const rawCellVal = String(excelRow[item.col]).trim();
+                const finalWorker = rawCellVal !== '' ? rawCellVal : 'SIN ASIGNAR';
+                updatedCellsCount++;
+                return {
+                  ...item,
+                  worker: finalWorker,
+                  modifiedAt: null,
+                  previousWorker: null
+                };
+              }
+              return { ...item, modifiedAt: null, previousWorker: null };
+            })
+          }))
+        }));
+
+        const now = new Date();
+        const formattedNow = formatDateTime(now);
+        const sortedWorkers = Array.from(extractedWorkersSet).sort((a, b) =>
+          a.localeCompare(b, 'es')
+        );
+
+        return {
+          dayKey: detectedDayKey,
+          scheduleDate: extractedDate,
+          fileNameLoaded: sourceFileName,
+          lastUpdated: formattedNow,
+          lastActionSummary: `Excel cargado (${detectedDayKey}): ${sourceFileName}`,
+          sections: freshSections,
+          workersList: sortedWorkers,
+          updatedCellsCount,
+          shortTime: formatShortTime(now)
+        };
+      };
+
+      const handleExcelFileUpload = async (e, forcedDay = 'AUTO') => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        const xlsxLib = await loadSheetJSLibrary();
+        const nextWeekly = { ...weeklySchedules };
+        const newLogs = [];
+        let lastProcessedDay = activeDayKey;
+
+        for (const file of files) {
+          try {
+            const buffer = await file.arrayBuffer();
+            let matrix = [];
+
+            if (xlsxLib) {
+              const data = new Uint8Array(buffer);
+              const workbook = xlsxLib.read(data, { type: 'array' });
+
+              if (workbook.SheetNames.length > 1 && forcedDay === 'AUTO') {
+                workbook.SheetNames.forEach((sheetName) => {
+                  const ws = workbook.Sheets[sheetName];
+                  const sheetMatrix = xlsxLib.utils.sheet_to_json(ws, { header: 1, defval: '' });
+                  if (sheetMatrix && sheetMatrix.length > 5) {
+                    const parsed = parseMatrixIntoScheduleData(
+                      sheetMatrix,
+                      `${file.name} [${sheetName}]`,
+                      detectWeekdayFromText(sheetName, 'AUTO')
+                    );
+                    nextWeekly[parsed.dayKey] = parsed;
+                    lastProcessedDay = parsed.dayKey;
+                    newLogs.push({
+                      id: `excel-${Date.now()}-${Math.random()}`,
+                      time: parsed.lastUpdated,
+                      shortTime: parsed.shortTime,
+                      user: 'admin',
+                      type: 'excel',
+                      position: `Carga Semanal (${parsed.dayKey})`,
+                      previousValue: '-',
+                      newValue: `${file.name} [${sheetName}] → ${parsed.scheduleDate}`
+                    });
+                  }
+                });
+                continue;
+              }
+
+              const firstSheetName = workbook.SheetNames[0];
+              const worksheet = workbook.Sheets[firstSheetName];
+              matrix = xlsxLib.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+            } else {
+              const text = new TextDecoder('utf-8').decode(buffer);
+              matrix = text.split(/\r?\n/).map((line) => line.split(/[;,|\t]/));
+            }
+
+            if (!matrix || matrix.length === 0) continue;
+
+            const parsed = parseMatrixIntoScheduleData(matrix, file.name, forcedDay);
+            nextWeekly[parsed.dayKey] = parsed;
+            lastProcessedDay = parsed.dayKey;
+
+            newLogs.push({
+              id: `excel-${Date.now()}-${Math.random()}`,
+              time: parsed.lastUpdated,
+              shortTime: parsed.shortTime,
+              user: 'admin',
+              type: 'excel',
+              position: `Carga Excel (${parsed.dayKey})`,
+              previousValue: scheduleDate,
+              newValue: `${file.name} (${parsed.scheduleDate} - ${parsed.updatedCellsCount} puestos)`
+            });
+          } catch (err) {
+            showToast(`Error al leer ${file.name}. Verifique que sea un .xlsx válido.`, 'error');
+          }
+        }
+
+        const updatedLogs = [...newLogs, ...changeLog];
+        setWeeklySchedules(nextWeekly);
+        setChangeLog(updatedLogs);
+        setActiveDayKey(lastProcessedDay);
+        await persistStateToCloud(nextWeekly, updatedLogs);
+
+        showToast(
+          files.length > 1
+            ? `¡${files.length} archivos Excel semanales procesados!`
+            : `Excel asignado al ${lastProcessedDay} y actualizado.`
+        );
+        e.target.value = '';
+      };
+
+      const handlePopulateFullWeekDemo = async () => {
+        const now = new Date();
+        const formattedNow = formatDateTime(now);
+        const shortNow = formatShortTime(now);
+        const dayDates = {
+          LUNES: 'LUNES 9 NOVIEMBRE',
+          MARTES: 'MARTES 10 NOVIEMBRE',
+          MIERCOLES: 'MIÉRCOLES 11 NOVIEMBRE',
+          JUEVES: 'JUEVES 12 NOVIEMBRE',
+          VIERNES: 'VIERNES 13 NOVIEMBRE',
+          SABADO: 'SÁBADO 14 NOVIEMBRE',
+          DOMINGO: 'DOMINGO 15 NOVIEMBRE'
+        };
+
+        const nextWeekly = { ...weeklySchedules };
+        WEEK_DAYS.forEach((d) => {
+          nextWeekly[d.key] = {
+            dayKey: d.key,
+            scheduleDate: dayDates[d.key],
+            fileNameLoaded: `${d.label.toLowerCase()}_semana_noviembre.xlsx`,
+            lastUpdated: formattedNow,
+            lastActionSummary: `Programación semanal precargada (${d.label})`,
+            sections: buildInitialSections(),
+            workersList: INITIAL_WORKERS_FROM_EXCEL,
+            source: 'Planificación Semanal Completa'
+          };
+        });
+
+        const newLog = {
+          id: `week-${Date.now()}`,
+          time: formattedNow,
+          shortTime: shortNow,
+          user: 'admin',
+          type: 'excel',
+          position: 'Planificación Semanal Completa (Lunes a Domingo)',
+          previousValue: `${Object.keys(weeklySchedules).length} días cargados`,
+          newValue: '7 días de la semana cargados y activados por día automático'
+        };
+
+        const updatedLogs = [newLog, ...changeLog];
+        setWeeklySchedules(nextWeekly);
+        setChangeLog(updatedLogs);
+        await persistStateToCloud(nextWeekly, updatedLogs);
+        showToast('¡Semana completa (Lunes a Domingo) cargada!');
+      };
+
+      const handleSyncFromOneDriveUrl = async (e) => {
+        e.preventDefault();
+        if (!oneDriveUrl.trim()) {
+          showToast('Introduce un enlace compartido de OneDrive o SharePoint.', 'error');
+          return;
+        }
+        setIsSyncingOneDrive(true);
+        try {
+          const cleanUrl = oneDriveUrl.trim();
+          const downloadUrl = cleanUrl.includes('?')
+            ? `${cleanUrl}&download=1`
+            : `${cleanUrl}?download=1`;
+
+          const response = await fetch(downloadUrl);
+          if (!response.ok) throw new Error('CORS o permisos de OneDrive');
+          const buffer = await response.arrayBuffer();
+          const xlsxLib = await loadSheetJSLibrary();
+          if (xlsxLib) {
+            const workbook = xlsxLib.read(new Uint8Array(buffer), { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const matrix = xlsxLib.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+            const parsed = parseMatrixIntoScheduleData(matrix, 'OneDrive_Sync.xlsx', targetUploadDay);
+            const nextWeekly = { ...weeklySchedules, [parsed.dayKey]: parsed };
+            const updatedLogs = [
+              {
+                id: `onedrive-${Date.now()}`,
+                time: parsed.lastUpdated,
+                shortTime: parsed.shortTime,
+                user: 'admin (OneDrive)',
+                type: 'excel',
+                position: `Sincronización OneDrive (${parsed.dayKey})`,
+                previousValue: fileNameLoaded,
+                newValue: `Importado de OneDrive (${parsed.scheduleDate})`
+              },
+              ...changeLog
+            ];
+            setWeeklySchedules(nextWeekly);
+            setChangeLog(updatedLogs);
+            setActiveDayKey(parsed.dayKey);
+            await persistStateToCloud(nextWeekly, updatedLogs, cleanUrl);
+            showToast('¡Archivo Excel descargado desde OneDrive!');
+          }
+        } catch (err) {
+          await persistStateToCloud(weeklySchedules, changeLog, oneDriveUrl.trim());
+          showToast(
+            'Vínculo guardado. Selecciona los Excel desde tu carpeta local sincronizada de OneDrive.',
+            'info'
+          );
+        } finally {
+          setIsSyncingOneDrive(false);
+        }
+      };
+
+      const handleExportCurrentExcel = async () => {
+        const rows = [
+          ['PARTE DIARIO DE QUIRÓFANO Y ANESTESIA', scheduleDate],
+          ['Última actualización:', lastUpdated, 'Resumen:', lastActionSummary],
+          [],
+          ['BLOQUE / SECCIÓN', 'SUBSECCIÓN', 'CÓDIGO / QX', 'PUESTO / ESPECIALIDAD', 'PROFESIONAL ASIGNADO', 'MODIFICADO HOY']
+        ];
+
+        sections.forEach((sec) => {
+          sec.columns.forEach((col) => {
+            col.items.forEach((item) => {
+              rows.push([
+                sec.title,
+                col.subtitle,
+                item.code,
+                item.label,
+                item.worker,
+                item.modifiedAt ? `Sí (${item.modifiedAt})` : 'Original Excel'
+              ]);
+            });
+          });
+        });
+
+        const xlsxLib = await loadSheetJSLibrary();
+        if (xlsxLib) {
+          const ws = xlsxLib.utils.aoa_to_sheet(rows);
+          const wb = xlsxLib.utils.book_new();
+          xlsxLib.utils.book_append_sheet(wb, ws, 'Parte Quirófano');
+          xlsxLib.writeFile(wb, `Parte_Quirofano_${scheduleDate.replace(/\s+/g, '_')}.xlsx`);
+        } else {
+          const csvContent =
+            '\uFEFF' +
+            rows
+              .map((r) => r.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(';'))
+              .join('\n');
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `Parte_Quirofano_${scheduleDate.replace(/\s+/g, '_')}.csv`;
+          link.click();
+          URL.revokeObjectURL(url);
+        }
+        showToast('Parte diario exportado a Excel correctamente.');
+      };
+
+      const handleSelectWorkerForCell = (newWorkerValue) => {
+        if (!editingCell) return;
+        const trimmedVal = String(newWorkerValue || '').trim();
+        if (!trimmedVal) return;
+
+        const { sectionId, columnId, item } = editingCell;
+        if (item.worker === trimmedVal) {
+          setEditingCell(null);
+          return;
+        }
+
+        const now = new Date();
+        const formattedNow = formatDateTime(now);
+        const shortNow = formatShortTime(now);
+
+        const extractedIndividuals = extractIndividualDoctorsFromText(trimmedVal);
+        if (extractedIndividuals.length > 0) {
+          setWorkersList((prev) => {
+            const nextSet = new Set(prev);
+            extractedIndividuals.forEach((d) => nextSet.add(d));
+            return Array.from(nextSet).sort((a, b) => a.localeCompare(b, 'es'));
+          });
+        } else if (
+          !workersList.includes(trimmedVal) &&
+          !SPECIAL_ASSIGNMENT_OPTIONS.includes(trimmedVal)
+        ) {
+          setWorkersList((prev) => [...prev, trimmedVal].sort((a, b) => a.localeCompare(b, 'es')));
+        }
+
+        const updatedSections = sections.map((sec) => {
+          if (sec.id !== sectionId) return sec;
+          return {
+            ...sec,
+            columns: sec.columns.map((col) => {
+              if (col.id !== columnId) return col;
+              return {
+                ...col,
+                items: col.items.map((it) => {
+                  if (it.id !== item.id) return it;
+                  return {
+                    ...it,
+                    previousWorker: it.worker,
+                    worker: trimmedVal,
+                    modifiedAt: shortNow
+                  };
+                })
+              };
+            })
+          };
+        });
+
+        const summaryText = `Cambio en ${item.code} (${item.label}): ${trimmedVal}`;
+        setSections(updatedSections);
+        setLastUpdated(formattedNow);
+        setLastActionSummary(summaryText);
+
+        const newLogEntry = {
+          id: `chg-${Date.now()}`,
+          time: formattedNow,
+          shortTime: shortNow,
+          user: 'admin',
+          type: 'edit',
+          position: `[${activeDayKey}] ${item.code} - ${item.label}`,
+          previousValue: item.worker,
+          newValue: trimmedVal
+        };
+
+        const updatedLogs = [newLogEntry, ...changeLog];
+        setChangeLog(updatedLogs);
+
+        const nextWeekly = {
+          ...weeklySchedules,
+          [activeDayKey]: {
+            ...(weeklySchedules[activeDayKey] || {}),
+            dayKey: activeDayKey,
+            scheduleDate,
+            fileNameLoaded,
+            lastUpdated: formattedNow,
+            lastActionSummary: summaryText,
+            sections: updatedSections,
+            workersList
+          }
+        };
+        setWeeklySchedules(nextWeekly);
+        persistStateToCloud(nextWeekly, updatedLogs);
+
+        setEditingCell(null);
+        setWorkerSearchModal('');
+        setCustomWorkerInput('');
+        showToast(`Actualizado: ${item.code} (${item.label}) → ${trimmedVal}`);
+      };
+
+      const handleAddCustomWorker = (e) => {
+        e.preventDefault();
+        const clean = newWorkerName.trim();
+        if (!clean) return;
+        const individuals = extractIndividualDoctorsFromText(clean);
+        setWorkersList((prev) => {
+          const next = new Set(prev);
+          if (individuals.length > 0) {
+            individuals.forEach((ind) => next.add(ind));
+          } else {
+            next.add(clean);
+          }
+          return Array.from(next).sort((a, b) => a.localeCompare(b, 'es'));
+        });
+        setNewWorkerName('');
+        setShowAddWorkerModal(false);
+        showToast(`Profesional "${clean}" añadido.`);
+      };
+
+      const duplicatesAnalysis = useMemo(() => {
+        const mapByDoctor = new Map();
+
+        sections.forEach((sec) => {
+          sec.columns.forEach((col) => {
+            col.items.forEach((item) => {
+              const doctorsInCell = extractIndividualDoctorsFromText(item.worker);
+              doctorsInCell.forEach((docName) => {
+                const codeUpper = String(item.code).toUpperCase();
+                const labelUpper = String(item.label).toUpperCase();
+                const isIncidencia = sec.id === 'bloque-incidencias';
+                const isLibra = col.id === 'guardia-libra';
+                const isGuardia = col.id === 'guardia-act';
+                const isTarde =
+                  codeUpper.startsWith('T') ||
+                  labelUpper.includes('TARDE') ||
+                  item.worker.toLowerCase().includes('tarde');
+
+                let shiftCategory = 'MAÑANA / CONTINUO';
+                if (isIncidencia) shiftCategory = 'BAJA / VACACIONES / DLD / REDUCCIÓN';
+                else if (isLibra) shiftCategory = 'LIBRA GUARDIA';
+                else if (isGuardia) shiftCategory = 'GUARDIA';
+                else if (isTarde) shiftCategory = 'TARDE';
+
+                if (!mapByDoctor.has(docName)) {
+                  mapByDoctor.set(docName, []);
+                }
+                mapByDoctor.get(docName).push({
+                  cellId: item.id,
+                  sectionId: sec.id,
+                  sectionTitle: sec.title,
+                  columnSubtitle: col.subtitle,
+                  code: item.code,
+                  label: item.label,
+                  rawCellText: item.worker,
+                  shiftCategory,
+                  isIncidencia,
+                  isLibra,
+                  isGuardia,
+                  isTarde
+                });
+              });
+            });
+          });
+        });
+
+        const duplicatedDoctors = [];
+        const duplicatedCellIds = new Set();
+        const cellDuplicateInfoMap = new Map();
+
+        mapByDoctor.forEach((occurrences, docName) => {
+          if (occurrences.length > 1) {
+            const hasIncidenciaOrLibra = occurrences.some((o) => o.isIncidencia || o.isLibra);
+            const morningWorkingCount = occurrences.filter(
+              (o) => !o.isIncidencia && !o.isLibra && !o.isGuardia && !o.isTarde
+            ).length;
+            const afternoonWorkingCount = occurrences.filter((o) => o.isTarde).length;
+
+            let severity = 'warning';
+            let reason = 'Asignado en múltiples puestos / turnos en el mismo día';
+
+            if (hasIncidenciaOrLibra && occurrences.length > 1) {
+              severity = 'critical';
+              reason = 'Incompatibilidad: Figura en Bajas/Vacaciones/DLD/Libra y asignado a otro puesto';
+            } else if (morningWorkingCount > 1) {
+              severity = 'critical';
+              reason = `Solapamiento directo: Asignado en ${morningWorkingCount} puestos simultáneos de mañana`;
+            } else if (afternoonWorkingCount > 1) {
+              severity = 'critical';
+              reason = `Solapamiento directo: Asignado en ${afternoonWorkingCount} puestos simultáneos de tarde`;
+            }
+
+            duplicatedDoctors.push({
+              doctor: docName,
+              count: occurrences.length,
+              severity,
+              reason,
+              occurrences
+            });
+
+            occurrences.forEach((occ) => {
+              duplicatedCellIds.add(occ.cellId);
+              const prevList = cellDuplicateInfoMap.get(occ.cellId) || [];
+              prevList.push({
+                doctor: docName,
+                count: occurrences.length,
+                severity,
+                reason,
+                otherLocations: occurrences
+                  .filter((o) => o.cellId !== occ.cellId)
+                  .map((o) => `${o.code} (${o.label})`)
+              });
+              cellDuplicateInfoMap.set(occ.cellId, prevList);
+            });
+          }
+        });
+
+        duplicatedDoctors.sort((a, b) => {
+          if (a.severity !== b.severity) return a.severity === 'critical' ? -1 : 1;
+          return b.count - a.count;
+        });
+
+        return {
+          duplicatedDoctors,
+          duplicatedCellIds,
+          cellDuplicateInfoMap,
+          criticalCount: duplicatedDoctors.filter((d) => d.severity === 'critical').length
+        };
+      }, [sections]);
+
+      const stats = useMemo(() => {
+        let totalCells = 0;
+        let modifiedCells = 0;
+        sections.forEach((s) =>
+          s.columns.forEach((c) =>
+            c.items.forEach((i) => {
+              totalCells++;
+              if (i.modifiedAt) modifiedCells++;
+            })
+          )
+        );
+        return {
+          totalCells,
+          modifiedCells,
+          totalWorkers: workersList.length
+        };
+      }, [sections, workersList]);
+
+      const filteredSections = useMemo(() => {
+        const q = searchQuery.trim().toLowerCase();
+        return sections
+          .filter((sec) => selectedSectionFilter === 'ALL' || sec.id === selectedSectionFilter)
+          .map((sec) => {
+            const filteredCols = sec.columns
+              .map((col) => {
+                const filteredItems = col.items.filter((item) => {
+                  if (onlyModifiedFilter && !item.modifiedAt) return false;
+                  if (
+                    onlyDuplicatesFilter &&
+                    !duplicatesAnalysis.duplicatedCellIds.has(item.id)
+                  ) {
+                    return false;
+                  }
+                  if (!q) return true;
+                  return (
+                    item.worker.toLowerCase().includes(q) ||
+                    item.label.toLowerCase().includes(q) ||
+                    item.code.toLowerCase().includes(q) ||
+                    col.subtitle.toLowerCase().includes(q)
+                  );
+                });
+                return { ...col, items: filteredItems };
+              })
+              .filter((col) => col.items.length > 0);
+
+            return { ...sec, columns: filteredCols };
+          })
+          .filter((sec) => sec.columns.length > 0);
+      }, [
+        sections,
+        searchQuery,
+        selectedSectionFilter,
+        onlyModifiedFilter,
+        onlyDuplicatesFilter,
+        duplicatesAnalysis
+      ]);
+
+      const filteredModalWorkers = useMemo(() => {
+        const q = workerSearchModal.trim().toLowerCase();
+        if (!q) return workersList;
+        return workersList.filter((w) => w.toLowerCase().includes(q));
+      }, [workersList, workerSearchModal]);
+
+      const filteredSpecialOptions = useMemo(() => {
+        const q = workerSearchModal.trim().toLowerCase();
+        if (!q) return SPECIAL_ASSIGNMENT_OPTIONS;
+        return SPECIAL_ASSIGNMENT_OPTIONS.filter((opt) => opt.toLowerCase().includes(q));
+      }, [workerSearchModal]);
+
+      const activeDoctorLocations = useMemo(() => {
+        const target = (highlightedDoctor || searchQuery).trim().toLowerCase();
+        if (!target || target.length < 2) return [];
+        const matches = [];
+        sections.forEach((sec) => {
+          sec.columns.forEach((col) => {
+            col.items.forEach((item) => {
+              if (item.worker.toLowerCase().includes(target)) {
+                matches.push({
+                  id: item.id,
+                  code: item.code,
+                  label: item.label,
+                  worker: item.worker,
+                  sectionTitle: sec.title,
+                  subtitle: col.subtitle,
+                  badgeColor: sec.badgeColor,
+                  modifiedAt: item.modifiedAt
+                });
+              }
+            });
+          });
+        });
+        return matches;
+      }, [sections, highlightedDoctor, searchQuery]);
+
+      const toggleSectionCollapse = (secId) => {
+        setCollapsedSections((prev) => ({
+          ...prev,
+          [secId]: !prev[secId]
+        }));
+      };
+
+      const formatCleanSpecialty = (rawLabel) => {
+        if (!rawLabel) return '';
+        return String(rawLabel)
+          .replace(/\s*\(1ª\s*AB\)/gi, '')
+          .replace(/\s*\(1ª\s*CD\)/gi, '')
+          .replace(/\s*\(2ª\s*AB\)/gi, '')
+          .replace(/\s*\(2ª\s*CD\)/gi, '')
+          .replace(/\s*\(CMA\)/gi, '')
+          .replace(/^TARDE\s*-\s*/i, '')
+          .replace(/^ENDOSCOPIAS\s*-\s*/i, '')
+          .replace(/^DOLOR\s*-\s*/i, '')
+          .replace(/^CONSULTA PREANESTESIA\s*-?\s*/i, 'PREANEST. ')
+          .trim();
+      };
+
+      const getDoctorInitials = (name) => {
+        const clean = String(name || '')
+          .replace(/^Dra?\.?\s+/i, '')
+          .replace(/\s*\(.*?\)/g, '')
+          .trim();
+        const parts = clean.split(/[\s.]+/).filter(Boolean);
+        if (parts.length === 0) return 'QX';
+        if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+      };
+
+      const getBoxVisualTheme = (secId, code, workerText, isModified, hasCriticalDuplicate) => {
+        const upperW = String(workerText).toUpperCase();
+        const upperC = String(code).toUpperCase();
+
+        if (hasCriticalDuplicate) {
+          return {
+            outerBorder: 'border-red-500 ring-2 ring-red-500/40 shadow-md',
+            headerBg: 'bg-red-900 text-white',
+            codePill: 'bg-white text-red-950',
+            specialtyText: 'text-red-100',
+            bodyBg: 'bg-red-50/70',
+            avatarBg: 'bg-red-600 text-white'
+          };
+        }
+        if (isModified) {
+          return {
+            outerBorder: 'border-amber-500 ring-2 ring-amber-400/50 shadow-md',
+            headerBg: 'bg-amber-900 text-white',
+            codePill: 'bg-amber-300 text-slate-950',
+            specialtyText: 'text-amber-100',
+            bodyBg: 'bg-amber-50/50',
+            avatarBg: 'bg-amber-500 text-slate-950'
+          };
+        }
+        if (upperW.includes('ANULADO') || upperW.includes('SIN ASIGNAR')) {
+          return {
+            outerBorder: 'border-slate-300 opacity-75',
+            headerBg: 'bg-slate-600 text-white',
+            codePill: 'bg-slate-800 text-slate-200',
+            specialtyText: 'text-slate-200',
+            bodyBg: 'bg-slate-100',
+            avatarBg: 'bg-slate-300 text-slate-600'
+          };
+        }
+        if (secId === 'bloque-guardia') {
+          const isLibra = upperC.startsWith('L');
+          return {
+            outerBorder: isLibra
+              ? 'border-indigo-300 hover:border-indigo-500'
+              : 'border-blue-300 hover:border-blue-600',
+            headerBg: isLibra ? 'bg-indigo-900 text-white' : 'bg-blue-900 text-white',
+            codePill: isLibra ? 'bg-indigo-300 text-indigo-950' : 'bg-sky-300 text-blue-950',
+            specialtyText: isLibra ? 'text-indigo-200' : 'text-blue-100',
+            bodyBg: 'bg-white',
+            avatarBg: isLibra ? 'bg-indigo-100 text-indigo-800' : 'bg-blue-100 text-blue-800'
+          };
+        }
+        if (secId === 'bloque-area-quirurgica') {
+          const isTarde = upperC.startsWith('T');
+          return {
+            outerBorder: isTarde
+              ? 'border-amber-300 hover:border-amber-500'
+              : 'border-emerald-300 hover:border-emerald-600',
+            headerBg: isTarde ? 'bg-amber-800 text-white' : 'bg-slate-900 text-white',
+            codePill: isTarde ? 'bg-amber-300 text-slate-950' : 'bg-emerald-400 text-slate-950',
+            specialtyText: isTarde ? 'text-amber-100' : 'text-slate-300',
+            bodyBg: 'bg-white',
+            avatarBg: isTarde ? 'bg-amber-100 text-amber-900' : 'bg-emerald-100 text-emerald-900'
+          };
+        }
+        if (secId === 'bloque-postoperatorios') {
+          return {
+            outerBorder: 'border-rose-300 hover:border-rose-500',
+            headerBg: 'bg-rose-950 text-white',
+            codePill: 'bg-rose-300 text-rose-950',
+            specialtyText: 'text-rose-100',
+            bodyBg: 'bg-white',
+            avatarBg: 'bg-rose-100 text-rose-900'
+          };
+        }
+        if (secId === 'bloque-cma-consultas') {
+          return {
+            outerBorder: 'border-cyan-300 hover:border-cyan-600',
+            headerBg: 'bg-cyan-950 text-white',
+            codePill: 'bg-cyan-300 text-cyan-950',
+            specialtyText: 'text-cyan-100',
+            bodyBg: 'bg-white',
+            avatarBg: 'bg-cyan-100 text-cyan-900'
+          };
+        }
+        return {
+          outerBorder: 'border-slate-300 hover:border-slate-500',
+          headerBg: 'bg-slate-800 text-white',
+          codePill: 'bg-slate-200 text-slate-900',
+          specialtyText: 'text-slate-300',
+          bodyBg: 'bg-white',
+          avatarBg: 'bg-slate-100 text-slate-800'
+        };
+      };
+
+      return (
+        <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col">
+          {/* NOTIFICACIÓN FLOTANTE */}
+          {notification && (
+            <div className="fixed bottom-5 right-5 z-50 max-w-md animate-bounce">
+              <div
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border ${
+                  notification.type === 'error'
+                    ? 'bg-red-600 text-white border-red-700'
+                    : notification.type === 'info'
+                    ? 'bg-slate-800 text-white border-slate-700'
+                    : 'bg-emerald-600 text-white border-emerald-700'
+                }`}
+              >
+                {notification.type === 'error' ? (
+                  <AlertCircle className="w-5 h-5 shrink-0" />
+                ) : (
+                  <CheckCircle2 className="w-5 h-5 shrink-0" />
+                )}
+                <span className="text-sm font-medium">{notification.msg}</span>
+              </div>
+            </div>
+          )}
+
+          {/* CABECERA OFICIAL REDISEÑADA: LIMPIA, HOMOGÉNEA Y ESTRUCTURADA */}
+          <header
+            className={`bg-slate-900 text-white shadow-md border-b-2 ${
+              isAdmin ? 'border-red-600' : 'border-emerald-600'
+            } lg:sticky lg:top-0 z-30`}
+          >
+            {/* NIVEL 1: Identidad del Parte + Botonera Homogénea */}
+            <div className="max-w-7xl mx-auto px-3 py-3 sm:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
+                    isAdmin
+                      ? 'bg-red-500/15 border-red-500/40 text-red-400'
+                      : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                  }`}
+                >
+                  <Stethoscope className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold text-slate-400 truncate">
+                    Servicio de Anestesiología y Reanimación
+                  </p>
+                  <div className="flex items-baseline gap-2.5 flex-wrap">
+                    <h1 className="text-base sm:text-xl font-extrabold tracking-tight text-white">
+                      PARTE DIARIO:{' '}
+                      <span className="text-amber-400">{scheduleDate}</span>
+                    </h1>
+                    <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 text-[11px] font-medium border border-slate-700/80">
+                      <FileSpreadsheet className="w-3 h-3 text-emerald-400" />
+                      {fileNameLoaded}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                <button
+                  onClick={() => setShowDuplicatesModal(true)}
+                  className={`h-9 px-3 rounded-lg border text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer ${
+                    duplicatesAnalysis.criticalCount > 0
+                      ? 'bg-red-950/80 hover:bg-red-900 text-red-200 border-red-500/50'
+                      : duplicatesAnalysis.duplicatedDoctors.length > 0
+                      ? 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700'
+                      : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+                  }`}
+                  title="Revisar personas duplicadas o solapamientos"
+                >
+                  <AlertTriangle
+                    className={`w-3.5 h-3.5 ${
+                      duplicatesAnalysis.criticalCount > 0
+                        ? 'text-red-400'
+                        : 'text-amber-400'
+                    }`}
+                  />
+                  <span>Duplicados</span>
+                  <span
+                    className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                      duplicatesAnalysis.criticalCount > 0
+                        ? 'bg-red-600 text-white'
+                        : 'bg-slate-700 text-slate-200'
+                    }`}
+                  >
+                    {duplicatesAnalysis.duplicatedDoctors.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setShowHistoryModal(true)}
+                  className="h-9 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer"
+                  title="Historial de cambios del día"
+                >
+                  <History className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Historial</span>
+                  <span className="px-1.5 py-0.2 rounded bg-slate-700 text-emerald-300 text-[10px] font-bold">
+                    {changeLog.length}
+                  </span>
+                </button>
+
+                {isAdmin ? (
+                  <div className="h-9 inline-flex items-center rounded-lg bg-red-950 border border-red-500/70 overflow-hidden shadow-xs">
+                    <div className="px-3 flex items-center gap-1.5 text-red-200 text-xs font-bold">
+                      <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+                      <span>ADMIN ACTIVO</span>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="h-full px-2.5 bg-red-900/80 hover:bg-red-700 text-white text-xs font-semibold inline-flex items-center gap-1 border-l border-red-500/40 transition cursor-pointer"
+                      title="Cerrar sesión de Administrador"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Salir</span>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowLoginModal(true)}
+                    className="h-9 px-3.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs inline-flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Acceso Admin</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* NIVEL 2: Barra Homogénea de Estado y Última Actualización */}
+            <div className="bg-slate-950/60 border-t border-slate-800">
+              <div className="max-w-7xl mx-auto px-3 py-1.5 sm:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="inline-flex items-center gap-1.5 text-emerald-400 font-bold">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                    Parte de quirófano más reciente
+                  </span>
+                  <span className="text-slate-600 hidden sm:inline">|</span>
+                  <span className="inline-flex items-center gap-1.5 text-slate-300">
+                    <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span>Última actualización:</span>
+                    <strong className="font-mono text-amber-300">{lastUpdated}</strong>
+                  </span>
+                </div>
+
+                <div className="text-[11px] text-slate-400 sm:text-right break-words">
+                  <span>Último cambio: </span>
+                  <span className="text-slate-200 font-medium">{lastActionSummary}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* NIVEL 3: Barra de Herramientas de Administrador */}
+            {isAdmin && (
+              <div className="bg-red-950/95 border-t border-red-800/80">
+                <div className="max-w-7xl mx-auto px-3 py-2 sm:px-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
+                  <div className="flex items-center gap-2 text-red-200 text-xs">
+                    <ShieldCheck className="w-4 h-4 text-red-400 shrink-0" />
+                    <span>
+                      <strong className="text-white">Modo Edición Administrador:</strong> Haz clic en cualquier casilla del parte para cambiar al facultativo asignado.
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      multiple
+                      onChange={(e) => handleExcelFileUpload(e, 'AUTO')}
+                      className="hidden"
+                    />
+
+                    <button
+                      onClick={() => setShowWeeklyAdminPanel(!showWeeklyAdminPanel)}
+                      className={`h-8 px-3 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 transition cursor-pointer ${
+                        showWeeklyAdminPanel
+                          ? 'bg-white text-red-950'
+                          : 'bg-red-900 hover:bg-red-800 text-white border border-red-700'
+                      }`}
+                    >
+                      <CalendarDays className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Planificación Semanal</span>
+                    </button>
+
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="h-8 px-3 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-bold inline-flex items-center gap-1.5 transition cursor-pointer"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Subir Excel</span>
+                    </button>
+
+                    <button
+                      onClick={() => setShowAddWorkerModal(true)}
+                      className="h-8 px-3 rounded-lg bg-red-900/70 hover:bg-red-800 text-red-100 border border-red-700/70 text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer"
+                    >
+                      <UserPlus className="w-3.5 h-3.5" />
+                      <span>Añadir Médico</span>
+                    </button>
+
+                    <button
+                      onClick={handleExportCurrentExcel}
+                      className="h-8 px-3 rounded-lg bg-red-900/70 hover:bg-red-800 text-red-100 border border-red-700/70 text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer"
+                    >
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-300" />
+                      <span>Exportar Excel</span>
+                    </button>
+
+                    <button
+                      onClick={() => setShowCloudArchitectureModal(true)}
+                      className="h-8 px-3 rounded-lg bg-red-900/70 hover:bg-red-800 text-red-100 border border-red-700/70 text-xs font-semibold inline-flex items-center gap-1.5 transition cursor-pointer"
+                    >
+                      <Cloud className="w-3.5 h-3.5 text-sky-300" />
+                      <span>Cloud / OneDrive</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* NIVEL 4: Selector de Días de la Semana (Diseño Limpio y Uniforme) */}
+            <div className="bg-slate-100 text-slate-800 border-t border-slate-200">
+              <div className="max-w-7xl mx-auto px-3 py-2 sm:px-6 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mr-1 shrink-0 hidden sm:inline">
+                    Semana:
+                  </span>
+                  <div className="grid grid-cols-7 gap-1 w-full sm:w-auto sm:flex sm:items-center">
+                    {WEEK_DAYS.map((d) => {
+                      const isCurrentSelected = activeDayKey === d.key;
+                      const isSystemToday = systemTodayKey === d.key;
+                      const isLoaded = Boolean(weeklySchedules[d.key]);
+                      return (
+                        <button
+                          key={d.key}
+                          onClick={() => handleSelectDayTab(d.key)}
+                          className={`h-8 px-2 sm:px-3.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border ${
+                            isCurrentSelected
+                              ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                              : isSystemToday
+                              ? 'bg-amber-100/80 hover:bg-amber-200/70 text-slate-900 border-amber-400'
+                              : isLoaded
+                              ? 'bg-white hover:bg-slate-200/70 text-slate-700 border-slate-300'
+                              : 'bg-slate-200/50 hover:bg-white text-slate-500 border-transparent'
+                          }`}
+                        >
+                          <span className="sm:hidden">{d.short}</span>
+                          <span className="hidden sm:inline">{d.label}</span>
+                          {isSystemToday && (
+                            <span
+                              className={`px-1 py-0.2 rounded text-[9px] font-black uppercase hidden md:inline ${
+                                isCurrentSelected
+                                  ? 'bg-amber-400 text-slate-950'
+                                  : 'bg-amber-500 text-slate-950'
+                              }`}
+                            >
+                              HOY
+                            </span>
+                          )}
+                          {isLoaded && !isCurrentSelected && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {activeDayKey !== systemTodayKey && (
+                  <button
+                    onClick={() => handleSelectDayTab(systemTodayKey)}
+                    className="h-8 px-3 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shrink-0 transition cursor-pointer hidden md:inline-flex items-center gap-1"
+                  >
+                    <span>Ir a Hoy ({systemTodayKey})</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </header>
+
+          {/* PANEL SEMANAL EXCLUSIVO ADMINISTRADOR */}
+          {isAdmin && showWeeklyAdminPanel && (
+            <div className="bg-slate-900 text-white border-b-4 border-amber-500 shadow-xl">
+              <div className="max-w-7xl mx-auto px-4 py-5 sm:px-6 space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/40">
+                      <CalendarDays className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded bg-amber-500 text-slate-950 text-[10px] font-black uppercase">
+                          Exclusivo Administradores
+                        </span>
+                        <h2 className="text-base sm:text-lg font-extrabold">
+                          Programación Quirúrgica Semanal Automática + OneDrive
+                        </h2>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Sube los partes Excel de toda la semana. El sistema mostrará automáticamente el parte del día actual.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={handlePopulateFullWeekDemo}
+                      className="px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <span>Precargar Semana (Lun-Dom)</span>
+                    </button>
+                    <button
+                      onClick={() => setShowWeeklyAdminPanel(false)}
+                      className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2.5">
+                  {WEEK_DAYS.map((d) => {
+                    const dayRecord = weeklySchedules[d.key];
+                    const isToday = systemTodayKey === d.key;
+                    const isSelected = activeDayKey === d.key;
+
+                    return (
+                      <div
+                        key={d.key}
+                        className={`rounded-xl border p-3 flex flex-col justify-between transition ${
+                          isSelected
+                            ? 'bg-slate-800 border-emerald-400 ring-2 ring-emerald-400/50'
+                            : dayRecord
+                            ? 'bg-slate-800/70 border-slate-700'
+                            : 'bg-slate-900/60 border-slate-800'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="text-xs font-extrabold uppercase tracking-wider text-white">
+                              {d.label}
+                            </span>
+                            {isToday && (
+                              <span className="px-1.5 py-0.5 rounded bg-amber-500 text-slate-950 text-[9px] font-black">
+                                HOY
+                              </span>
+                            )}
+                          </div>
+
+                          {dayRecord ? (
+                            <div className="mt-2 space-y-1">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400">
+                                <CheckCircle className="w-3 h-3 shrink-0" />
+                                Cargado
+                              </span>
+                              <p className="text-xs font-bold text-amber-300 truncate">
+                                {dayRecord.scheduleDate}
+                              </p>
+                              <p className="text-[10px] text-slate-400 truncate">
+                                {dayRecord.fileNameLoaded}
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="mt-2 py-2">
+                              <span className="text-[11px] text-slate-500 italic block">
+                                Sin archivo específico
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="mt-3 pt-2 border-t border-slate-700/70 flex flex-col gap-1.5">
+                          <label className="w-full px-2.5 py-1.5 rounded-lg bg-slate-700 hover:bg-emerald-500 hover:text-slate-950 text-slate-200 text-[11px] font-bold text-center transition cursor-pointer flex items-center justify-center gap-1">
+                            <Upload className="w-3 h-3" />
+                            <span>Subir {d.short}</span>
+                            <input
+                              type="file"
+                              accept=".xlsx,.xls,.csv"
+                              onChange={(e) => handleExcelFileUpload(e, d.key)}
+                              className="hidden"
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => handleSelectDayTab(d.key)}
+                            className="w-full px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 text-slate-300 text-[10px] font-semibold transition cursor-pointer"
+                          >
+                            Ver / Editar {d.short}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
+                  <div className="bg-slate-800/90 border border-slate-700 rounded-xl p-4 flex flex-col justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 shrink-0">
+                        <FolderSync className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-extrabold text-white">
+                          Subida Múltiple Semanal (Desde carpeta OneDrive local)
+                        </h3>
+                        <p className="text-xs text-slate-300 mt-1">
+                          Selecciona a la vez los archivos Excel de la semana directamente desde tu carpeta de OneDrive.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-end gap-2">
+                      <input
+                        ref={weeklyMultiFileInputRef}
+                        type="file"
+                        accept=".xlsx,.xls,.csv"
+                        multiple
+                        onChange={(e) => handleExcelFileUpload(e, 'AUTO')}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => weeklyMultiFileInputRef.current?.click()}
+                        className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs transition cursor-pointer flex items-center gap-2"
+                      >
+                        <Upload className="w-4 h-4" />
+                        <span>Seleccionar todos los Excel de la semana (.xlsx)</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <form
+                    onSubmit={handleSyncFromOneDriveUrl}
+                    className="bg-slate-800/90 border border-slate-700 rounded-xl p-4 flex flex-col justify-between gap-3"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-sky-500/20 text-sky-400 shrink-0">
+                        <Link2 className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-sm font-extrabold text-white">
+                          Enlace de Microsoft OneDrive / SharePoint
+                        </h3>
+                        <p className="text-xs text-slate-300 mt-1">
+                          Conecta un enlace compartido de OneDrive o usa "Exportar a Excel" para guardar cambios.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        type="url"
+                        value={oneDriveUrl}
+                        onChange={(e) => setOneDriveUrl(e.target.value)}
+                        placeholder="https://1drv.ms/x/s!..."
+                        className="flex-1 min-w-[200px] px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                      />
+                      <select
+                        value={targetUploadDay}
+                        onChange={(e) => setTargetUploadDay(e.target.value)}
+                        className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-200"
+                      >
+                        <option value="AUTO">Día Automático</option>
+                        {WEEK_DAYS.map((d) => (
+                          <option key={d.key} value={d.key}>
+                            Asignar a {d.label}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="submit"
+                        disabled={isSyncingOneDrive}
+                        className="px-3.5 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold text-xs transition cursor-pointer"
+                      >
+                        {isSyncingOneDrive ? 'Sincronizando...' : 'Conectar'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* BARRA DE BÚSQUEDA Y FILTROS */}
+          <div className="bg-white border-b border-slate-200 shadow-xs sticky top-0 lg:top-[76px] z-20">
+            <div className="max-w-7xl mx-auto px-3 py-2 sm:px-6 sm:py-2.5 space-y-2">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                <div className="flex flex-1 flex-wrap items-center gap-1.5 sm:gap-2">
+                  <div className="relative flex-1 min-w-[200px]">
+                    <Search className="w-4 h-4 text-emerald-600 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setHighlightedDoctor('');
+                      }}
+                      placeholder="Buscar médico, Qx (ej. Qx 6) o especialidad..."
+                      className="w-full pl-9 pr-8 py-1.5 rounded-xl border-2 border-slate-200 text-xs sm:text-sm font-medium focus:outline-none focus:border-emerald-500 bg-slate-50 focus:bg-white transition"
+                    />
+                    {(searchQuery || highlightedDoctor) && (
+                      <button
+                        onClick={() => {
+                          setSearchQuery('');
+                          setHighlightedDoctor('');
+                        }}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  <select
+                    value={highlightedDoctor}
+                    onChange={(e) => {
+                      setHighlightedDoctor(e.target.value);
+                      setSearchQuery(e.target.value);
+                      if (e.target.value) setCollapsedSections({});
+                    }}
+                    className="flex-1 sm:flex-initial py-1.5 px-2.5 rounded-xl border border-slate-300 text-xs bg-white font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                  >
+                    <option value="">🎯 Localizar facultativo...</option>
+                    {workersList.map((w) => (
+                      <option key={w} value={w}>
+                        {w}
+                      </option>
+                    ))}
+                  </select>
+
+                  <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                    <button
+                      onClick={() => setOnlyModifiedFilter(!onlyModifiedFilter)}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer shrink-0 ${
+                        onlyModifiedFilter
+                          ? 'bg-amber-400 border-amber-500 text-slate-950 shadow-xs'
+                          : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Edit3 className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Cambios ({stats.modifiedCells})</span>
+                    </button>
+
+                    <button
+                      onClick={() => setOnlyDuplicatesFilter(!onlyDuplicatesFilter)}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer shrink-0 ${
+                        onlyDuplicatesFilter
+                          ? 'bg-red-600 border-red-700 text-white shadow-xs'
+                          : 'bg-slate-50 border-slate-300 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      <AlertTriangle
+                        className={`w-3.5 h-3.5 ${
+                          onlyDuplicatesFilter ? 'text-white' : 'text-red-600'
+                        }`}
+                      />
+                      <span>Duplicados ({duplicatesAnalysis.duplicatedDoctors.length})</span>
+                    </button>
+
+                    <div className="inline-flex rounded-xl bg-slate-100 p-0.5 border border-slate-200 shrink-0">
+                      <button
+                        onClick={() => setViewLayoutMode('EXCEL')}
+                        className={`px-2 py-1 rounded-lg text-[11px] sm:text-xs font-extrabold transition cursor-pointer ${
+                          viewLayoutMode === 'EXCEL'
+                            ? 'bg-emerald-700 text-white shadow-2xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                        title="Vista idéntica a la hoja de cálculo Excel original"
+                      >
+                        📊 Hoja Excel
+                      </button>
+                      <button
+                        onClick={() => setViewLayoutMode('MAP')}
+                        className={`px-2 py-1 rounded-lg text-[11px] sm:text-xs font-extrabold transition cursor-pointer ${
+                          viewLayoutMode === 'MAP'
+                            ? 'bg-slate-900 text-white shadow-2xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        ▦ Boxes
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Píldoras rápidas de navegación por Zonas Hospitalarias */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
+                {[
+                  { id: 'ALL', label: '🏥 Todo el Parte', color: 'bg-slate-800 text-white' },
+                  { id: 'bloque-area-quirurgica', label: '🟩 Quirófanos 1ª y 2ª', color: 'bg-emerald-700 text-white' },
+                  { id: 'bloque-guardia', label: '🟦 Guardias / Libranzas', color: 'bg-blue-700 text-white' },
+                  { id: 'bloque-postoperatorios', label: '🟥 URPA / UCI-A 4ªP', color: 'bg-rose-700 text-white' },
+                  { id: 'bloque-alejada-urg', label: '🟪 Alejada Qx / Maternidad / Urg', color: 'bg-purple-700 text-white' },
+                  { id: 'bloque-cma-consultas', label: '🟦 CMA / Consultas / Dolor / Endosc.', color: 'bg-cyan-700 text-white' },
+                  { id: 'bloque-incidencias', label: '🟨 Bajas / Vacaciones / Formación', color: 'bg-amber-600 text-white' }
+                ].map((pill) => {
+                  const active = selectedSectionFilter === pill.id;
+                  return (
+                    <button
+                      key={pill.id}
+                      onClick={() => {
+                        setSelectedSectionFilter(pill.id);
+                        if (pill.id !== 'ALL') {
+                          setCollapsedSections((prev) => ({ ...prev, [pill.id]: false }));
+                        }
+                      }}
+                      className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 transition cursor-pointer border ${
+                        active
+                          ? `${pill.color} border-transparent shadow-xs`
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      {pill.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* TARJETA INSTANTÁNEA DE LOCALIZACIÓN CUANDO ALGUIEN SE BUSCA EN EL PARTE */}
+          {activeDoctorLocations.length > 0 && (
+            <div className="max-w-7xl w-full mx-auto px-2 pt-2 sm:px-4">
+              <div className="bg-emerald-950 text-white rounded-xl p-2.5 shadow-md border border-emerald-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-emerald-500 text-slate-950 font-black">
+                    <Stethoscope className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-extrabold">
+                      Asignaciones hoy para "{highlightedDoctor || searchQuery}" ({activeDoctorLocations.length}):
+                    </h3>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {activeDoctorLocations.map((loc) => (
+                    <div
+                      key={loc.id}
+                      className="bg-slate-900 border border-emerald-500/50 rounded-lg px-2.5 py-1 flex items-center gap-1.5"
+                    >
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-400 text-slate-950 text-[11px] font-black">
+                        {loc.code}
+                      </span>
+                      <div className="text-[11px]">
+                        <span className="font-extrabold text-white">{loc.label}</span>
+                        <span className="text-emerald-300 ml-1">({loc.worker})</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* CUERPO PRINCIPAL: HOJA EXCEL ULTRA-COMPACTA O MAPA DE BOXES */}
+          <main className="flex-1 max-w-7xl w-full mx-auto px-2 py-2 sm:px-4 space-y-2.5">
+            {filteredSections.length === 0 ? (
+              <div className="bg-white rounded-xl border border-slate-300 p-8 text-center shadow-xs">
+                <Search className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                <h3 className="text-sm font-bold text-slate-800">
+                  No se encontraron quirófanos o puestos que coincidan con el filtro
+                </h3>
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setHighlightedDoctor('');
+                    setSelectedSectionFilter('ALL');
+                    setOnlyModifiedFilter(false);
+                    setOnlyDuplicatesFilter(false);
+                  }}
+                  className="mt-3 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 transition cursor-pointer"
+                >
+                  Restablecer vista completa del Excel
+                </button>
+              </div>
+            ) : viewLayoutMode === 'EXCEL' ? (
+              /* ====================================================================
+                 VISTA HOJA DE CÁLCULO EXCEL ULTRA-COMPACTA (PARALELA A 2 BLOQUES)
+                 Idéntica en estructura de tablas y celdas a "12 noviembre (1).xlsx"
+              ==================================================================== */
+              <div className="bg-white border-2 border-slate-400 shadow-sm rounded-lg overflow-hidden">
+                {/* Banda superior estilo cabecera de hoja Excel */}
+                <div className="bg-slate-800 text-white px-3 py-1.5 flex flex-wrap items-center justify-between gap-2 border-b-2 border-slate-500 text-[11px]">
+                  <div className="flex items-center gap-2 font-mono font-bold">
+                    <span className="px-1.5 py-0.5 bg-emerald-500 text-slate-950 rounded font-black">
+                      HOJA 1
+                    </span>
+                    <span className="text-amber-300 font-extrabold tracking-wide">
+                      {scheduleDate}
+                    </span>
+                    <span className="text-slate-400 hidden sm:inline">
+                      | Distribución paralela de celdas original ({stats.totalCells} casillas)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-[10px] text-slate-300">
+                    <span className="inline-flex items-center gap-1">
+                      <span className="w-2.5 h-2.5 bg-amber-200 border border-amber-500 inline-block" />
+                      Modificado hoy ({stats.modifiedCells})
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <span className="w-2.5 h-2.5 bg-red-200 border border-red-600 inline-block" />
+                      Duplicado ({duplicatesAnalysis.duplicatedDoctors.length})
+                    </span>
+                    <span className="text-emerald-300 font-semibold">
+                      {isAdmin ? '✎ Clic en cualquier celda de médico para editar' : '🔒 Clic en celda para acceso Admin'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="divide-y-2 divide-slate-400">
+                  {filteredSections.map((section) => {
+                    const totalItemsInSec = section.columns.reduce(
+                      (acc, col) => acc + col.items.length,
+                      0
+                    );
+                    const isCollapsed =
+                      Boolean(collapsedSections[section.id]) &&
+                      !searchQuery &&
+                      selectedSectionFilter === 'ALL';
+
+                    // Sub-encabezados internos de fila que imitan las filas divisorias del Excel original
+                    const getExcelRowGroupTitle = (itemId) => {
+                      const dividers = {
+                        r45_c3: 'QUIROFANOS 1ª AB',
+                        r52_c3: 'QUIROFANOS 1ª CD',
+                        r64_c3: 'TARDE (1ª PLANTA)',
+                        r46_c7: 'QUIROFANOS 2ª AB',
+                        r56_c7: 'QUIROFANOS 2ª CD',
+                        r68_c7: 'TARDE (2ª PLANTA)',
+                        r76_c3: 'ANESTESIA ALEJADA DE QX',
+                        r84_c3: 'QUIROFANOS URG',
+                        r76_c7: 'REFUERZO QUIRÓFANO / TRASPLANTE',
+                        r80_c7: 'MATERNIDAD',
+                        r84_c7: 'SUSTITUCIONES',
+                        r91_c3: 'URPA 2ºP',
+                        r96_c3: 'URPA 1ºP',
+                        r91_c7: 'UCI-A 4ªP',
+                        r103_c3: 'QUIROFANOS CMA',
+                        r111_c3: 'TARDES CMA',
+                        r119_c3: 'ENDOSCOPIAS',
+                        r127_c3: 'DOLOR',
+                        r103_c7: 'URPA CMA',
+                        r106_c7: 'CONSULTA CMA - CS. VILLAVERDE',
+                        r110_c7: 'CONSULTA PREANESTESIA',
+                        r124_c7: 'ACTIVIDAD NO ASISTENCIAL / DIRECCIÓN'
+                      };
+                      return dividers[itemId] || null;
+                    };
+
+                    return (
+                      <div key={section.id} className="bg-white">
+                        {/* Barra de título de bloque muy compacta */}
+                        <div
+                          onClick={() => toggleSectionCollapse(section.id)}
+                          className="bg-slate-200 hover:bg-slate-300/80 text-slate-900 px-2.5 py-1 flex items-center justify-between cursor-pointer select-none border-b border-slate-300"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2.5 h-2.5 rounded-xs ${section.badgeColor}`} />
+                            <span className="text-[11px] font-black tracking-wider uppercase text-slate-900">
+                              {section.title}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-mono font-bold text-slate-600">
+                              {totalItemsInSec} celdas
+                            </span>
+                            <ChevronDown
+                              className={`w-3.5 h-3.5 text-slate-600 transition-transform ${
+                                isCollapsed ? '-rotate-90' : 'rotate-0'
+                              }`}
+                            />
+                          </div>
+                        </div>
+
+                        {!isCollapsed && (
+                          <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x-2 divide-slate-400">
+                            {section.columns.map((col) => (
+                              <div key={col.id} className="overflow-x-auto">
+                                <table className="w-full border-collapse text-left table-fixed">
+                                  <thead>
+                                    <tr className={`${col.headerBg} text-[10px] uppercase tracking-wider`}>
+                                      <th className="py-1 px-2 border-b border-r border-slate-400/50 w-[38%] font-extrabold truncate">
+                                        {col.subtitle}
+                                      </th>
+                                      <th className="py-1 px-1 border-b border-r border-slate-400/50 w-[13%] text-center font-mono font-extrabold">
+                                        QX/Cód
+                                      </th>
+                                      <th className="py-1 px-2 border-b border-slate-400/50 w-[49%] font-extrabold">
+                                        Facultativo Asignado
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-slate-300 text-[11px] sm:text-xs">
+                                    {col.items.map((item) => {
+                                      const groupHeader = getExcelRowGroupTitle(item.id);
+                                      const isModified = Boolean(item.modifiedAt);
+                                      const duplicateInfos =
+                                        duplicatesAnalysis.cellDuplicateInfoMap.get(item.id) || [];
+                                      const hasCriticalDuplicate = duplicateInfos.some(
+                                        (d) => d.severity === 'critical'
+                                      );
+                                      const hasWarningDuplicate =
+                                        duplicateInfos.length > 0 && !hasCriticalDuplicate;
+
+                                      const cleanSpec = formatCleanSpecialty(item.label);
+                                      const upperW = String(item.worker).toUpperCase();
+                                      const isGuardiaCell = upperW.includes('GUARDIA');
+                                      const isAnulado =
+                                        upperW.includes('ANULADO') || upperW.includes('SIN ASIGNAR');
+                                      const isAnestEsp = upperW.includes('ANEST.');
+
+                                      return (
+                                        <React.Fragment key={item.id}>
+                                          {groupHeader && (
+                                            <tr className="bg-slate-700 text-amber-300">
+                                              <td
+                                                colSpan={3}
+                                                className="py-0.5 px-2 text-[10px] font-black uppercase tracking-widest border-y border-slate-500"
+                                              >
+                                                ▸ {groupHeader}
+                                              </td>
+                                            </tr>
+                                          )}
+                                          <tr
+                                            onClick={() => {
+                                              if (isAdmin) {
+                                                setEditingCell({
+                                                  sectionId: section.id,
+                                                  columnId: col.id,
+                                                  item
+                                                });
+                                                setWorkerSearchModal('');
+                                                setCustomWorkerInput(item.worker);
+                                              } else {
+                                                setShowLoginModal(true);
+                                              }
+                                            }}
+                                            className={`group cursor-pointer transition-colors ${
+                                              hasCriticalDuplicate
+                                                ? 'bg-red-100/90 hover:bg-red-200/80'
+                                                : isModified
+                                                ? 'bg-amber-100/90 hover:bg-amber-200/80'
+                                                : hasWarningDuplicate
+                                                ? 'bg-orange-50 hover:bg-orange-100/80'
+                                                : 'hover:bg-emerald-50/90 even:bg-slate-50/60'
+                                            }`}
+                                            title={
+                                              isAdmin
+                                                ? `Clic para editar celda ${item.code} (${item.label})`
+                                                : `${item.label} [${item.code}]: ${item.worker}`
+                                            }
+                                          >
+                                            {/* Columna 1: Especialidad / Puesto (Col B o F del Excel) */}
+                                            <td className="py-1 px-2 border-r border-slate-300 font-semibold text-slate-700 truncate bg-slate-100/60">
+                                              {cleanSpec}
+                                            </td>
+
+                                            {/* Columna 2: Código Qx / Turno (Col C o G del Excel) */}
+                                            <td
+                                              className={`py-1 px-1 border-r border-slate-300 text-center font-mono font-extrabold text-[11px] ${
+                                                String(item.code).startsWith('T')
+                                                  ? 'bg-amber-100/80 text-amber-950'
+                                                  : String(item.code).startsWith('G') ||
+                                                    String(item.code).startsWith('L')
+                                                  ? 'bg-blue-100/70 text-blue-950'
+                                                  : 'bg-slate-200/70 text-slate-900'
+                                              }`}
+                                            >
+                                              {item.code.replace(/^Qx\s+/i, '')}
+                                            </td>
+
+                                            {/* Columna 3: Médico Asignado (Col D o H del Excel) */}
+                                            <td className="py-1 px-2 font-bold text-slate-950 relative">
+                                              <div className="flex items-center justify-between gap-1 min-w-0">
+                                                <div className="min-w-0 flex-1 leading-tight break-words">
+                                                  <span
+                                                    className={
+                                                      isAnulado
+                                                        ? 'text-red-700 font-extrabold uppercase text-[11px]'
+                                                        : isGuardiaCell
+                                                        ? 'text-indigo-800 font-extrabold'
+                                                        : isAnestEsp
+                                                        ? 'text-emerald-800 font-extrabold'
+                                                        : 'text-slate-950 font-extrabold'
+                                                    }
+                                                  >
+                                                    {item.worker}
+                                                  </span>
+
+                                                  {isModified && item.previousWorker && (
+                                                    <span className="ml-1.5 text-[10px] text-amber-800 line-through font-normal">
+                                                      ({item.previousWorker})
+                                                    </span>
+                                                  )}
+                                                </div>
+
+                                                {/* Indicadores compactos a la derecha de la celda */}
+                                                <div className="flex items-center gap-1 shrink-0">
+                                                  {duplicateInfos.length > 0 && (
+                                                    <span
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSearchQuery(duplicateInfos[0].doctor);
+                                                      }}
+                                                      className={`px-1 py-0.2 rounded text-[9px] font-black uppercase ${
+                                                        hasCriticalDuplicate
+                                                          ? 'bg-red-600 text-white'
+                                                          : 'bg-amber-400 text-slate-950'
+                                                      }`}
+                                                      title={`Duplicado en: ${duplicateInfos
+                                                        .map((d) => d.otherLocations.join(', '))
+                                                        .join(' | ')}`}
+                                                    >
+                                                      DUP
+                                                    </span>
+                                                  )}
+                                                  {isModified && (
+                                                    <span className="px-1 py-0.2 rounded bg-amber-500 text-slate-950 text-[9px] font-mono font-black">
+                                                      {item.modifiedAt}
+                                                    </span>
+                                                  )}
+                                                  <Edit3 className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition shrink-0" />
+                                                </div>
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        </React.Fragment>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              /* ====================================================================
+                 VISTA ALTERNATIVA: MAPA DE BOXES
+              ==================================================================== */
+              filteredSections.map((section) => {
+                const totalItemsInSec = section.columns.reduce(
+                  (acc, col) => acc + col.items.length,
+                  0
+                );
+                const isCollapsed =
+                  Boolean(collapsedSections[section.id]) &&
+                  !searchQuery &&
+                  selectedSectionFilter === 'ALL';
+
+                return (
+                  <section
+                    key={section.id}
+                    className="bg-white rounded-2xl shadow-xs border border-slate-200/90 overflow-hidden"
+                  >
+                    <div
+                      onClick={() => toggleSectionCollapse(section.id)}
+                      className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 flex items-center justify-between cursor-pointer transition select-none"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className={`w-3 h-3 rounded-full ${section.badgeColor}`} />
+                        <h2 className="text-xs sm:text-sm font-extrabold tracking-wide uppercase">
+                          {section.title}
+                        </h2>
+                        {section.id === 'bloque-incidencias' && isCollapsed && (
+                          <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 text-[10px] font-bold">
+                            Clic para desplegar Bajas, Vacaciones y Formación
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-slate-300 bg-slate-800 px-2.5 py-0.5 rounded-full font-bold">
+                          {totalItemsInSec} puestos
+                        </span>
+                        <ChevronDown
+                          className={`w-4 h-4 text-slate-400 transition-transform ${
+                            isCollapsed ? '-rotate-90' : 'rotate-0'
+                          }`}
+                        />
+                      </div>
+                    </div>
+
+                    {!isCollapsed && (
+                      <div className="p-2.5 sm:p-3.5 space-y-3 bg-slate-50/50">
+                        {section.columns.map((col) => (
+                          <div key={col.id} className="space-y-2">
+                            <div className="flex items-center justify-between border-b border-slate-200 pb-1">
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`${col.headerBg} px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider shadow-2xs`}
+                                >
+                                  {col.subtitle}
+                                </span>
+                                <span className="text-[10px] text-slate-500 font-semibold">
+                                  ({col.items.length})
+                                </span>
+                              </div>
+                            </div>
+
+                            <div
+                              className={`grid gap-2 ${
+                                section.id === 'bloque-guardia'
+                                  ? 'grid-cols-2 sm:grid-cols-4 lg:grid-cols-4'
+                                  : section.id === 'bloque-incidencias'
+                                  ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6'
+                                  : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'
+                              }`}
+                            >
+                              {col.items.map((item) => {
+                                const isModified = Boolean(item.modifiedAt);
+                                const duplicateInfos =
+                                  duplicatesAnalysis.cellDuplicateInfoMap.get(item.id) || [];
+                                const hasCriticalDuplicate = duplicateInfos.some(
+                                  (d) => d.severity === 'critical'
+                                );
+                                const cleanSpecialty = formatCleanSpecialty(item.label);
+                                const theme = getBoxVisualTheme(
+                                  section.id,
+                                  item.code,
+                                  item.worker,
+                                  isModified,
+                                  hasCriticalDuplicate
+                                );
+
+                                const workerParts = String(item.worker)
+                                  .split('/')
+                                  .map((p) => p.trim())
+                                  .filter(Boolean);
+
+                                const isSpecialStatus =
+                                  item.worker.includes('GUARDIA') ||
+                                  item.worker.includes('ANEST.') ||
+                                  item.worker.includes('ANULADO') ||
+                                  item.worker.includes('SIN ASIGNAR') ||
+                                  item.worker.includes('TRASLADO') ||
+                                  item.worker.includes('PASA A LA M');
+
+                                return (
+                                  <div
+                                    key={item.id}
+                                    onClick={() => {
+                                      if (isAdmin) {
+                                        setEditingCell({
+                                          sectionId: section.id,
+                                          columnId: col.id,
+                                          item
+                                        });
+                                        setWorkerSearchModal('');
+                                        setCustomWorkerInput(item.worker);
+                                      } else {
+                                        setShowLoginModal(true);
+                                      }
+                                    }}
+                                    className={`group relative rounded-xl border overflow-hidden flex flex-col justify-between transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md cursor-pointer ${theme.outerBorder} ${theme.bodyBg}`}
+                                  >
+                                    <div
+                                      className={`${theme.headerBg} px-2.5 py-1.5 flex items-center justify-between gap-1.5 border-b border-black/10`}
+                                    >
+                                      <div className="flex items-center gap-1.5 min-w-0">
+                                        <span
+                                          className={`px-1.5 py-0.5 rounded text-[11px] font-black tracking-tight shrink-0 shadow-2xs ${theme.codePill}`}
+                                        >
+                                          {item.code}
+                                        </span>
+                                        <span
+                                          className={`text-[10px] font-bold uppercase tracking-wide truncate ${theme.specialtyText}`}
+                                          title={item.label}
+                                        >
+                                          {cleanSpecialty}
+                                        </span>
+                                      </div>
+
+                                      {isModified && (
+                                        <span className="px-1 py-0.2 rounded bg-amber-400 text-slate-950 text-[9px] font-black shrink-0">
+                                          {item.modifiedAt}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <div className="px-2.5 py-2 flex-1 flex flex-col justify-center bg-white group-hover:bg-emerald-50/30 transition">
+                                      {workerParts.length > 1 ? (
+                                        <div className="space-y-1">
+                                          {workerParts.map((part, pIdx) => (
+                                            <div
+                                              key={pIdx}
+                                              className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/80 rounded-lg px-2 py-1"
+                                            >
+                                              <span
+                                                className={`w-5 h-5 rounded-md text-[9px] font-black flex items-center justify-center shrink-0 ${theme.avatarBg}`}
+                                              >
+                                                {getDoctorInitials(part)}
+                                              </span>
+                                              <span className="text-[11px] sm:text-xs font-extrabold text-slate-900 leading-tight break-words">
+                                                {part}
+                                              </span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <div className="flex items-center justify-between gap-1.5">
+                                          <div className="flex items-center gap-2 min-w-0">
+                                            {!isSpecialStatus ? (
+                                              <div
+                                                className={`w-6 h-6 rounded-lg text-[10px] font-black flex items-center justify-center shrink-0 ${theme.avatarBg}`}
+                                              >
+                                                {getDoctorInitials(item.worker)}
+                                              </div>
+                                            ) : null}
+
+                                            <div className="min-w-0">
+                                              {isSpecialStatus ? (
+                                                <span
+                                                  className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-black tracking-wide uppercase leading-tight ${
+                                                    item.worker.includes('ANULADO') ||
+                                                    item.worker.includes('SIN ASIGNAR')
+                                                      ? 'bg-red-100 text-red-800 border border-red-200'
+                                                      : item.worker.includes('GUARDIA')
+                                                      ? 'bg-indigo-100 text-indigo-900 border border-indigo-200'
+                                                      : 'bg-emerald-100 text-emerald-900 border border-emerald-200'
+                                                  }`}
+                                                >
+                                                  {item.worker}
+                                                </span>
+                                              ) : (
+                                                <p
+                                                  className="text-xs sm:text-[13px] font-extrabold text-slate-950 leading-snug break-words"
+                                                  title={item.worker}
+                                                >
+                                                  {item.worker}
+                                                </p>
+                                              )}
+
+                                              {isModified && item.previousWorker && (
+                                                <p className="text-[10px] text-amber-800 font-semibold truncate mt-0.5">
+                                                  Antes:{' '}
+                                                  <span className="line-through opacity-75">
+                                                    {item.previousWorker}
+                                                  </span>
+                                                </p>
+                                              )}
+                                            </div>
+                                          </div>
+
+                                          <Edit3 className="w-3.5 h-3.5 text-slate-300 group-hover:text-emerald-600 shrink-0 transition opacity-0 group-hover:opacity-100" />
+                                        </div>
+                                      )}
+
+                                      {duplicateInfos.length > 0 && (
+                                        <div className="mt-1.5 pt-1 border-t border-slate-100 flex flex-wrap gap-1">
+                                          {duplicateInfos.map((dup) => (
+                                            <span
+                                              key={dup.doctor}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSearchQuery(dup.doctor);
+                                              }}
+                                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-extrabold truncate max-w-full ${
+                                                dup.severity === 'critical'
+                                                  ? 'bg-red-600 text-white'
+                                                  : 'bg-amber-200 text-amber-950'
+                                              }`}
+                                              title={`${dup.doctor} también en: ${dup.otherLocations.join(', ')}`}
+                                            >
+                                              <AlertTriangle className="w-2.5 h-2.5 shrink-0" />
+                                              <span className="truncate">
+                                                Solapado: {dup.otherLocations.join(', ')}
+                                              </span>
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                );
+              })
+            )}
+          </main>
+
+          {/* MODAL LOGIN ADMINISTRADOR */}
+          {showLoginModal && (
+            <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden">
+                <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <Lock className="w-5 h-5 text-amber-400" />
+                    <h3 className="text-base font-extrabold">Acceso Administrador</h3>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowLoginModal(false);
+                      setLoginError('');
+                    }}
+                    className="p-1 rounded-lg text-slate-400 hover:text-white cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleLoginSubmit} className="p-6 space-y-4">
+                  <p className="text-xs text-slate-600">
+                    Introduce tus credenciales de Administrador para subir el Excel diario o modificar las asignaciones de quirófano en tiempo real.
+                  </p>
+
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between gap-2">
+                    <div className="text-xs text-amber-900">
+                      <p className="font-bold">Credenciales de acceso:</p>
+                      <p className="font-mono mt-0.5">
+                        Usuario: <strong>admin</strong> | Clave: <strong>quirofano2026</strong>
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={fillDemoCredentials}
+                      className="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shrink-0 transition cursor-pointer"
+                    >
+                      Autocompletar
+                    </button>
+                  </div>
+
+                  {loginError && (
+                    <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{loginError}</span>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      Usuario
+                    </label>
+                    <input
+                      type="text"
+                      value={usernameInput}
+                      onChange={(e) => setUsernameInput(e.target.value)}
+                      placeholder="admin"
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      Contraseña
+                    </label>
+                    <input
+                      type="password"
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      placeholder="••••••••••••"
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      required
+                    />
+                  </div>
+
+                  <label className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={rememberSessionCookie}
+                      onChange={(e) => setRememberSessionCookie(e.target.checked)}
+                      className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                    />
+                    <div className="text-xs">
+                      <span className="font-bold text-slate-800 block">
+                        Mantener sesión iniciada en este dispositivo (Cookie 30 días)
+                      </span>
+                      <span className="text-[11px] text-slate-500">
+                        No tendrás que volver a introducir la contraseña al recargar o abrir la web.
+                      </span>
+                    </div>
+                  </label>
+
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginModal(false)}
+                      className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md transition cursor-pointer"
+                    >
+                      Entrar como Administrador
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL AÑADIR PROFESIONAL */}
+          {showAddWorkerModal && (
+            <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden">
+                <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <UserPlus className="w-5 h-5 text-emerald-400" />
+                    <h3 className="text-base font-extrabold">Añadir Profesional al Listado</h3>
+                  </div>
+                  <button
+                    onClick={() => setShowAddWorkerModal(false)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-white cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleAddCustomWorker} className="p-6 space-y-4">
+                  <p className="text-xs text-slate-600">
+                    El profesional añadido aparecerá inmediatamente como opción individual en todas las casillas del parte diario.
+                  </p>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      Nombre del Doctor / Doctora
+                    </label>
+                    <input
+                      type="text"
+                      value={newWorkerName}
+                      onChange={(e) => setNewWorkerName(e.target.value)}
+                      placeholder="Ej. Dra. M. Fernández"
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      required
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddWorkerModal(false)}
+                      className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer"
+                    >
+                      Guardar Profesional
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL EDICIÓN DE CASILLA */}
+          {editingCell && (
+            <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full overflow-hidden flex flex-col max-h-[88vh]">
+                <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] uppercase tracking-wider text-emerald-400 font-bold">
+                      Modificar Asignación de Casilla
+                    </span>
+                    <h3 className="text-base sm:text-lg font-extrabold flex items-center gap-2 mt-0.5">
+                      <span className="px-2 py-0.5 rounded bg-emerald-500 text-slate-950 text-xs font-black">
+                        {editingCell.item.code}
+                      </span>
+                      <span>{editingCell.item.label}</span>
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setEditingCell(null)}
+                    className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-4 bg-slate-50 border-b border-slate-200 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
+                    <span>
+                      Asignación actual:{' '}
+                      <strong className="text-slate-900 bg-amber-100 px-2 py-0.5 rounded">
+                        {editingCell.item.worker}
+                      </strong>
+                    </span>
+                  </div>
+
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={workerSearchModal}
+                      onChange={(e) => setWorkerSearchModal(e.target.value)}
+                      placeholder="Filtrar entre los profesionales del Excel..."
+                      className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={customWorkerInput}
+                        onChange={(e) => setCustomWorkerInput(e.target.value)}
+                        placeholder="Asignación o combinación con '/' (ej. Dr. X / Dra. Y)..."
+                        className="flex-1 px-3 py-1.5 rounded-xl border border-slate-300 text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                      <button
+                        onClick={() => handleSelectWorkerForCell(customWorkerInput)}
+                        className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shrink-0 transition cursor-pointer"
+                      >
+                        Guardar casilla
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                      Profesionales Individuales en el Excel ({filteredModalWorkers.length})
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                      {filteredModalWorkers.map((worker) => {
+                        const currentIndividuals = extractIndividualDoctorsFromText(
+                          editingCell.item.worker
+                        );
+                        const isSelected =
+                          worker === editingCell.item.worker ||
+                          currentIndividuals.includes(worker);
+
+                        const existingAssignments = [];
+                        sections.forEach((s) =>
+                          s.columns.forEach((c) =>
+                            c.items.forEach((it) => {
+                              if (
+                                it.id !== editingCell.item.id &&
+                                extractIndividualDoctorsFromText(it.worker).includes(worker)
+                              ) {
+                                existingAssignments.push(`${it.code} (${it.label})`);
+                              }
+                            })
+                          )
+                        );
+
+                        return (
+                          <div
+                            key={worker}
+                            className={`rounded-xl border p-2 flex items-center justify-between gap-1.5 transition ${
+                              isSelected
+                                ? 'bg-emerald-600 text-white border-emerald-700 font-bold shadow-xs'
+                                : existingAssignments.length > 0
+                                ? 'bg-amber-50/70 hover:bg-amber-100/70 text-slate-800 border-amber-300'
+                                : 'bg-slate-50 hover:bg-emerald-50 text-slate-800 border-slate-200/80'
+                            }`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => handleSelectWorkerForCell(worker)}
+                              className="flex-1 text-left min-w-0 cursor-pointer"
+                            >
+                              <div className="text-xs sm:text-sm truncate flex items-center gap-1">
+                                <span className="truncate">{worker}</span>
+                                {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                              </div>
+                              {existingAssignments.length > 0 && (
+                                <p
+                                  className={`text-[10px] truncate ${
+                                    isSelected ? 'text-emerald-100' : 'text-amber-800 font-semibold'
+                                  }`}
+                                >
+                                  En: {existingAssignments.join(', ')}
+                                </p>
+                              )}
+                            </button>
+
+                            {!isSelected && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const currentClean = customWorkerInput.trim();
+                                  const combined =
+                                    !currentClean || currentClean === 'SIN ASIGNAR'
+                                      ? worker
+                                      : `${currentClean} / ${worker}`;
+                                  setCustomWorkerInput(combined);
+                                }}
+                                className="px-2 py-1 rounded-lg bg-white/90 hover:bg-white text-slate-700 border border-slate-300 text-[10px] font-extrabold shrink-0 cursor-pointer"
+                              >
+                                + /
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {filteredSpecialOptions.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                        Turnos de Guardia / Estados Especiales
+                      </h4>
+                      <div className="flex flex-wrap gap-1.5">
+                        {filteredSpecialOptions.map((opt) => (
+                          <button
+                            key={opt}
+                            onClick={() => handleSelectWorkerForCell(opt)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 transition cursor-pointer"
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL DETECTOR DE DUPLICADOS */}
+          {showDuplicatesModal && (
+            <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full overflow-hidden flex flex-col max-h-[85vh]">
+                <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <AlertTriangle className="w-5 h-5 text-amber-400" />
+                    <div>
+                      <h3 className="text-base font-extrabold">
+                        Detector de Personas Duplicadas y Solapamientos ({scheduleDate})
+                      </h3>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowDuplicatesModal(false)}
+                    className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-5 space-y-3">
+                  {duplicatesAnalysis.duplicatedDoctors.length === 0 ? (
+                    <div className="text-center py-10">
+                      <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-2" />
+                      <h4 className="text-base font-bold text-slate-800">
+                        No hay ningún profesional duplicado en el parte
+                      </h4>
+                    </div>
+                  ) : (
+                    duplicatesAnalysis.duplicatedDoctors.map((dup) => (
+                      <div
+                        key={dup.doctor}
+                        className={`rounded-xl border p-4 ${
+                          dup.severity === 'critical'
+                            ? 'bg-red-50/70 border-red-300'
+                            : 'bg-amber-50/60 border-amber-300'
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase ${
+                                dup.severity === 'critical'
+                                  ? 'bg-red-600 text-white'
+                                  : 'bg-amber-500 text-slate-950'
+                              }`}
+                            >
+                              {dup.severity === 'critical' ? 'Solapamiento Mismo Turno' : 'Multi-turno / Guardia'}
+                            </span>
+                            <h4 className="text-sm sm:text-base font-extrabold text-slate-900">
+                              {dup.doctor}
+                            </h4>
+                            <span className="text-xs font-semibold text-slate-600">
+                              ({dup.count} asignaciones)
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              setSearchQuery(dup.doctor);
+                              setOnlyDuplicatesFilter(false);
+                              setShowDuplicatesModal(false);
+                            }}
+                            className="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer"
+                          >
+                            Localizar en el parte
+                          </button>
+                        </div>
+
+                        <p className="text-xs text-slate-700 mt-1 font-medium">{dup.reason}</p>
+
+                        <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {dup.occurrences.map((occ, i) => (
+                            <div
+                              key={`${occ.cellId}-${i}`}
+                              className="bg-white rounded-lg border border-slate-200 px-3 py-2 flex items-center justify-between gap-2"
+                            >
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-extrabold">
+                                    {occ.code}
+                                  </span>
+                                  <span className="text-xs font-bold text-slate-800 truncate">
+                                    {occ.label}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                                  {occ.columnSubtitle} · "{occ.rawCellText}"
+                                </p>
+                              </div>
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 shrink-0">
+                                {occ.shiftCategory}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL HISTORIAL */}
+          {showHistoryModal && (
+            <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full overflow-hidden flex flex-col max-h-[85vh]">
+                <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <History className="w-5 h-5 text-emerald-400" />
+                    <div>
+                      <h3 className="text-base font-extrabold">
+                        Registro de Actualizaciones del Parte ({scheduleDate})
+                      </h3>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowHistoryModal(false)}
+                    className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-5 divide-y divide-slate-200">
+                  {changeLog.map((entry, idx) => (
+                    <div key={entry.id} className="py-3 first:pt-0 last:pb-0 flex items-start gap-3">
+                      <div
+                        className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold shrink-0 ${
+                          idx === 0
+                            ? 'bg-amber-500 text-slate-950'
+                            : 'bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        {entry.time}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs sm:text-sm font-bold text-slate-900">
+                            {entry.position}
+                          </span>
+                          {idx === 0 && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800">
+                              MÁS RECIENTE
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-600 mt-0.5">
+                          Anterior: <span className="line-through text-slate-400">{entry.previousValue}</span>{' '}
+                          → Nuevo: <strong className="text-emerald-700">{entry.newValue}</strong>
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL GUÍA HOSTING Y ONEDRIVE */}
+          {showCloudArchitectureModal && (
+            <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full overflow-hidden flex flex-col max-h-[88vh]">
+                <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <Cloud className="w-5 h-5 text-sky-400" />
+                    <h3 className="text-base font-extrabold">
+                      Guía de Despliegue Gratuito en Vercel y OneDrive
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setShowCloudArchitectureModal(false)}
+                    className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 space-y-4 text-slate-700 text-xs sm:text-sm">
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 space-y-2">
+                    <div className="flex items-center gap-2 text-emerald-900 font-extrabold text-sm">
+                      <Globe className="w-4 h-4 text-emerald-600" />
+                      <span>Cómo subir este archivo index.html a Vercel gratis</span>
+                    </div>
+                    <ol className="list-decimal pl-5 space-y-1.5 text-xs text-slate-700">
+                      <li>Descarga este archivo <strong>index.html</strong> en una carpeta nueva en tu ordenador.</li>
+                      <li>Sube esa carpeta a un repositorio gratuito en <strong>GitHub.com</strong>.</li>
+                      <li>Entra en <strong>Vercel.com</strong> con tu cuenta de GitHub, pulsa <em>Add New → Project</em>, importa tu repositorio y dale a <strong>Deploy</strong>.</li>
+                      <li>En 20 segundos tendrás tu web gratuita terminada en <code>.vercel.app</code>.</li>
+                    </ol>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-end">
+                  <button
+                    onClick={() => setShowCloudArchitectureModal(false)}
+                    className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer"
+                  >
+                    Entendido
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
